@@ -13,11 +13,14 @@ export default async function Home() {
     <>
       <h1 className="sr-only">En antena</h1>
       {onAir.length > 0 && (
-        <div className="pb-12 pt-8">
+        // Ends flush with the grid, so the black stops exactly where the covers begin
+        <div className="bg-black px-4 pb-12 text-accent sm:px-8">
           <TapeDeck tracks={onAir} />
         </div>
       )}
-      {latest.length ? <TrackGrid tracks={latest} /> : <p className="text-center uppercase">Aún no hay canciones.</p>}
+      <div className="px-4 pt-12 sm:px-8">
+        {latest.length ? <TrackGrid tracks={latest} /> : <p className="text-center uppercase">Aún no hay canciones.</p>}
+      </div>
     </>
   );
 }

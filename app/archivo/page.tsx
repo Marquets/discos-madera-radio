@@ -19,7 +19,7 @@ export default async function ArchivePage({ searchParams }: PageProps<"/archivo"
   }
 
   return (
-    <>
+    <div className="px-4 sm:px-8">
       <h1 className="pt-8 text-center font-display text-7xl uppercase leading-none sm:text-9xl">Archivo</h1>
       <nav className="flex justify-center gap-6 pb-8 pt-4 font-display text-2xl uppercase">
         <Link href="/archivo" aria-current={!byMonth ? "page" : undefined} className="decoration-4 underline-offset-4 hover:underline aria-[current=page]:underline">
@@ -40,6 +40,6 @@ export default async function ArchivePage({ searchParams }: PageProps<"/archivo"
           </section>
         ))}
       </div>
-    </>
+    </div>
   );
 }

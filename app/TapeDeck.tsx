@@ -1,10 +1,9 @@
 "use client";
 
-import Image from "next/image";
 import { useEffect, useState } from "react";
 import { nowPlaying } from "@/lib/schedule";
 
-type DeckTrack = { title: string; artist: string; durationSec: number; cover?: string };
+type DeckTrack = { title: string; artist: string; durationSec: number };
 
 // Discos Madera poster palette: orange on black
 const CREAM = "#f89028";
@@ -85,19 +84,6 @@ export function TapeDeck({ tracks }: { tracks: DeckTrack[] }) {
         <circle cx="540" cy="287" r="7" fill={WIRE} />
         <rect x={HEAD_X - 17} y="260" width="34" height="28" fill={CREAM} />
       </svg>
-      {track && (
-        <figcaption className="mt-4 flex items-center justify-center gap-4 uppercase">
-          {track.cover && <Image src={track.cover} alt="" width={64} height={64} className="size-16 shrink-0 object-cover" />}
-          <span className="flex flex-col gap-1">
-            <span className="flex items-center gap-2 font-mono text-[10px] tracking-[0.3em]">
-              <span className="size-1.5 rounded-full bg-black motion-safe:animate-pulse" /> Now playing
-            </span>
-            <span className="font-display text-2xl leading-tight">
-              {track.title} <span className="font-mono text-lg">— {track.artist}</span>
-            </span>
-          </span>
-        </figcaption>
-      )}
     </figure>
   );
 }

@@ -26,7 +26,9 @@ type EmbedController = {
 type IFrameAPI = {
   createController(
     el: HTMLElement,
-    opts: { uri: string; width: string; height: number },
+    // theme dark is the only look the API exposes: flat dark instead of a background
+    // tinted from the cover art. There is no compact or hide-controls option.
+    opts: { uri: string; width: string; height: number; theme?: "dark" },
     callback: (controller: EmbedController) => void,
   ): void;
 };
@@ -86,10 +88,11 @@ export function RadioPlayer({ tracks, thanks }: { tracks: RadioTrack[]; thanks: 
       if (cancelled) return;
       // Spotify replaces the target node with its iframe, so give it one React doesn't own
       const target = document.createElement("div");
-      container.current!.append(target);
+      // Under the tape deck on the front page; anywhere else it floats in the corner
+      (document.getElementById("reproductor") ?? container.current!).append(target);
       const first = nowPlaying(tracks.map((t) => t.durationSec), Date.now())!;
       let tuned = false;
-      api.createController(target, { uri: tracks[first.index].spotifyUri, width: "100%", height: 80 }, (c) => {
+      api.createController(target, { uri: tracks[first.index].spotifyUri, width: "100%", height: 80, theme: "dark" }, (c) => {
         controller.current = c;
         // The only signal the browser actually let us play; play() itself reports nothing
         c.addListener("playback_started", () => setPlaying(true));
@@ -152,7 +155,7 @@ export function RadioPlayer({ tracks, thanks }: { tracks: RadioTrack[]; thanks: 
         // Visible as soon as a track is loaded, never gated on `playing`: on iOS and Android
         // the gesture has to happen inside Spotify's own iframe, so hiding it until playback
         // is confirmed leaves a phone with no way to ever start the radio.
-        className={`fixed right-4 bottom-4 z-10 w-[min(360px,calc(100%-2rem))] overflow-hidden rounded-xl shadow-xl ${current === null ? "invisible" : ""}`}
+        className={`fixed right-4 bottom-4 z-10 w-[min(360px,calc(100%-2rem))] overflow-hidden rounded-xl shadow-xl empty:hidden ${current === null ? "invisible" : ""}`}
       />
     </>
   );

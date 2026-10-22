@@ -13,8 +13,6 @@ const WIRE = "#8a5520";
 const HEAD_X = 368;
 const REEL = { empty: 52, full: 92 };
 
-const pad = (n: number) => String(Math.floor(n)).padStart(2, "0");
-
 function useClock() {
   const [now, setNow] = useState<number | null>(null);
   const [reduced, setReduced] = useState(false);
@@ -71,9 +69,6 @@ export function TapeDeck({ tracks }: { tracks: DeckTrack[] }) {
   return (
     <figure className="mx-auto w-full max-w-4xl">
       <svg viewBox="0 0 736 320" role="img" aria-label={track ? `Sonando: ${track.title} de ${track.artist}` : "Magnetófono de la radio"} className="block w-full rounded-xl bg-black">
-        <text x={HEAD_X} y="62" textAnchor="middle" fill={CREAM} fontSize="40" className="font-mono" letterSpacing="2">
-          {track ? `${pad(elapsed / 60)}:${pad(elapsed % 60)}:${pad((elapsed % 1) * 100)}` : "--:--:--"}
-        </text>
         {[-2, -1, 0, 1, 2].map((i) => (
           <line key={i} x1={HEAD_X + i * 18} x2={HEAD_X + i * 18} y1="88" y2={i === 0 ? "106" : "100"} stroke={i === 0 ? CREAM : WIRE} strokeWidth="3" />
         ))}

@@ -19,7 +19,26 @@
 
 @media (min-width: 640px) {
   :root {
-    --chrome: 15.75rem;
+    --chrome: 17.50rem;
+  }
+}
+
+/* El logo baja a buscar el magnetófono, pero solo en la portada: es la única página
+   con hero, y se reconoce por el hueco del reproductor. En el archivo la cabecera se
+   queda arriba como cualquier otra.
+
+   El magnetófono se apoya arriba del hero, no centrado: así el hueco con el logo es
+   pequeño y constante, y es este margen el que centra verticalmente el conjunto de
+   logo, magnetófono y reproductor. Va atado a --chrome de la regla de arriba: si
+   cambia uno, hay que volver a medir el otro.
+
+   El margen está calculado para centrar el conjunto en una pantalla de portátil. El
+   conjunto mide un alto fijo, así que en ventanas muy altas o muy bajas quedará algo
+   descentrado: centrarlo de verdad pediría meter el logo dentro del hero, y vive en
+   la cabecera porque es el enlace a la portada de todas las páginas. */
+@media (min-width: 640px) {
+  body:has(#reproductor) header a[href="/"] {
+    margin-top: 7.75rem;
   }
 }
 

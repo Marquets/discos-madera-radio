@@ -16,7 +16,7 @@ export default async function Home() {
         // One full screen minus what sits above it, so the covers start just off the
         // fold and scrolling is what reveals them. svh, not vh, because a phone's
         // address bar shrinks the viewport and vh would overshoot behind it.
-        <div className="flex min-h-[calc(100svh-var(--chrome))] flex-col justify-center bg-black px-4 pb-12 text-accent sm:px-8">
+        <div className="flex min-h-[calc(100svh-var(--chrome))] flex-col bg-black px-4 pb-12 text-accent sm:px-8">
           <TapeDeck tracks={onAir} />
           {/* RadioPlayer suelta aquí el iframe de Spotify: dice lo mismo que decía el
               pie "now playing", así que hace de pie además de reproductor */}

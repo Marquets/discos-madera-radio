@@ -1,6 +1,11 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { getStore, type Store } from "@netlify/blobs";
+// Imported rather than read from disk: a path built at runtime is invisible to
+// Next's dependency tracing, so the file would be missing from the deployed
+// function. Without it readDb finds no lastSyncAt and syncPlaylist runs inline,
+// which times the request out.
+import seed from "../data/db.json";
 
 export type Track = {
   id: string;
@@ -17,6 +22,7 @@ type Db = { lastSyncAt?: string; tracks: Track[] };
 
 const KEY = "db";
 const FILE = path.join(process.cwd(), "data", "db.json");
+const SEED = seed as Db;
 
 /**
  * Netlify injects the Blobs context into deployed functions, where the filesystem is read-only.
@@ -44,7 +50,7 @@ export async function readDb(): Promise<Db> {
   const store = blobs();
   if (!store) return readFileDb();
   // On the first deploy the blob is empty, so start from the db.json committed in the repo
-  return (await store.get(KEY, { type: "json" })) ?? (await readFileDb());
+  return (await store.get(KEY, { type: "json" })) ?? SEED;
 }
 
 // Only one local server writes the file, so an in-process lock is enough there
@@ -70,7 +76,9 @@ export async function updateDb(mutate: (db: Db) => void): Promise<Db> {
   // rather than a dropped song. `modified: false` means someone else wrote first.
   for (let attempt = 0; attempt < 3; attempt++) {
     const current = await store.getWithMetadata(KEY, { type: "json" });
-    const db: Db = current?.data ?? (await readFileDb());
+    // structuredClone so a mutation never leaks into the imported seed, which is
+    // module state shared by every request this instance serves
+    const db: Db = current?.data ?? structuredClone(SEED);
     mutate(db);
     const { modified } = await store.setJSON(KEY, db, current?.etag ? { onlyIfMatch: current.etag } : { onlyIfNew: true });
     if (modified) return db;

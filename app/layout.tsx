@@ -29,14 +29,16 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <Suspense fallback={<div className="h-9 bg-black" />}>
           <OnAir />
         </Suspense>
-        <header className="flex items-start justify-between gap-4 px-4 pt-4 font-display text-xl uppercase leading-none sm:px-8 sm:text-2xl">
-          <Link href="/" className="flex flex-col gap-1">
+        <header className="grid grid-cols-2 items-start gap-4 px-4 pt-4 font-display text-xl uppercase leading-none sm:grid-cols-[1fr_auto_1fr] sm:px-8 sm:text-2xl">
+          {/* Equal 1fr side columns keep the logo centred however wide the sides grow.
+              Three columns are too tight on a phone, so there it takes its own row. */}
+          <NavLinks />
+          <Link href="/" className="order-first col-span-2 flex flex-col items-center gap-1 sm:order-none sm:col-span-1">
             {/* SVG traced from the Discos Madera party poster; served as-is, Next can't optimize SVGs */}
             <Image src="/logo-discos-madera.svg" alt="Discos Madera" width={735} height={197} unoptimized priority className="h-10 w-auto sm:h-14" />
             <span className="font-mono text-xs tracking-[0.5em] sm:text-sm">Radio</span>
           </Link>
-          <NavLinks />
-          <a href={playlistUrl()} target="_blank" rel="noreferrer" className="text-right hover:underline">
+          <a href={playlistUrl()} target="_blank" rel="noreferrer" className="justify-self-end text-right hover:underline">
             Añadir
             <br />a la playlist ↗
           </a>

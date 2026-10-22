@@ -53,7 +53,34 @@
       "durationSec": 254,
       "firstSeenAt": "2026-10-22T12:14:44.832Z",
       "cover": "https://image-cdn-fa.spotifycdn.com/image/ab67616d00001e027489790811cd6b0c5b4eff88"
+    },
+    {
+      "id": "3PK4Xc1Suw09k3HX6IeQHM",
+      "title": "im not your man",
+      "artist": "Junior Mesa",
+      "spotifyUri": "spotify:track:3PK4Xc1Suw09k3HX6IeQHM",
+      "durationSec": 195,
+      "firstSeenAt": "2026-10-22T16:03:40.864Z",
+      "cover": "https://image-cdn-fa.spotifycdn.com/image/ab67616d00001e029a2d4c6af8ed35a7a00ac80a"
+    },
+    {
+      "id": "0zZ5TnmUIub96AsZmkCXYS",
+      "title": "Indecision (feat. Daniel Caesar)",
+      "artist": "Rex Orange County, Daniel Caesar",
+      "spotifyUri": "spotify:track:0zZ5TnmUIub96AsZmkCXYS",
+      "durationSec": 186,
+      "firstSeenAt": "2026-10-22T16:03:40.864Z",
+      "cover": "https://image-cdn-fa.spotifycdn.com/image/ab67616d00001e026a05d5befdde1b244f3fb4e6"
+    },
+    {
+      "id": "1L4FhDRm94CBlIay2MDuc0",
+      "title": "I Can't Fall",
+      "artist": "This Is Lorelei",
+      "spotifyUri": "spotify:track:1L4FhDRm94CBlIay2MDuc0",
+      "durationSec": 183,
+      "firstSeenAt": "2026-10-22T16:03:40.864Z",
+      "cover": "https://image-cdn-fa.spotifycdn.com/image/ab67616d00001e02e02a1debf276767e6ac7ded1"
     }
   ],
-  "lastSyncAt": "2026-10-22T12:44:16.904Z"
+  "lastSyncAt": "2026-10-22T16:10:06.299Z"
 }

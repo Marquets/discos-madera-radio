@@ -2,7 +2,7 @@ import { getTracks } from "@/lib/sync";
 import { TapeDeck } from "./TapeDeck";
 import { TrackGrid } from "./TrackGrid";
 
-// Reads a local file in milliseconds; no need for a loading shell
+// The stored list resolves in milliseconds; the playlist refresh happens after the response
 export const instant = false;
 
 export default async function Home() {

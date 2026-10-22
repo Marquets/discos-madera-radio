@@ -1,5 +1,6 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { getStore, type Store } from "@netlify/blobs";
 
 export type Track = {
   id: string;
@@ -14,12 +15,23 @@ export type Track = {
 
 type Db = { lastSyncAt?: string; tracks: Track[] };
 
+const KEY = "db";
 const FILE = path.join(process.cwd(), "data", "db.json");
 
-// shortcut: JSON file + in-process lock, only valid for one local server; move to Supabase/Postgres before deploying
-let lock: Promise<unknown> = Promise.resolve();
+/**
+ * Netlify injects the Blobs context into deployed functions, where the filesystem is read-only.
+ * Locally there is no context, so fall back to the JSON file and `npm run dev` needs no setup.
+ */
+function blobs(): Store | null {
+  try {
+    // Strong consistency: an eventually consistent read can drop a song that was just synced
+    return getStore({ name: "radio", consistency: "strong" });
+  } catch {
+    return null;
+  }
+}
 
-export async function readDb(): Promise<Db> {
+async function readFileDb(): Promise<Db> {
   try {
     return JSON.parse(await readFile(FILE, "utf8"));
   } catch (e) {
@@ -28,9 +40,19 @@ export async function readDb(): Promise<Db> {
   }
 }
 
-export function updateDb(mutate: (db: Db) => void): Promise<Db> {
+export async function readDb(): Promise<Db> {
+  const store = blobs();
+  if (!store) return readFileDb();
+  // On the first deploy the blob is empty, so start from the db.json committed in the repo
+  return (await store.get(KEY, { type: "json" })) ?? (await readFileDb());
+}
+
+// Only one local server writes the file, so an in-process lock is enough there
+let lock: Promise<unknown> = Promise.resolve();
+
+function updateFileDb(mutate: (db: Db) => void): Promise<Db> {
   const next = lock.then(async () => {
-    const db = await readDb();
+    const db = await readFileDb();
     mutate(db);
     await mkdir(path.dirname(FILE), { recursive: true });
     await writeFile(FILE, JSON.stringify(db, null, 2));
@@ -38,4 +60,20 @@ export function updateDb(mutate: (db: Db) => void): Promise<Db> {
   });
   lock = next.catch(() => {});
   return next;
+}
+
+export async function updateDb(mutate: (db: Db) => void): Promise<Db> {
+  const store = blobs();
+  if (!store) return updateFileDb(mutate);
+
+  // Several instances can sync at once; a conditional write turns a lost race into a retry
+  // rather than a dropped song. `modified: false` means someone else wrote first.
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const current = await store.getWithMetadata(KEY, { type: "json" });
+    const db: Db = current?.data ?? (await readFileDb());
+    mutate(db);
+    const { modified } = await store.setJSON(KEY, db, current?.etag ? { onlyIfMatch: current.etag } : { onlyIfNew: true });
+    if (modified) return db;
+  }
+  throw new Error("Blob store kept losing the write race after 3 attempts");
 }

@@ -3,6 +3,7 @@ import { Anton, Space_Mono } from "next/font/google";
 import Link from "next/link";
 import { Suspense } from "react";
 import { playlistUrl } from "@/lib/spotify";
+import { recentContributors } from "@/lib/contributors";
 import { getTracks } from "@/lib/sync";
 import { Logo } from "./Logo";
 import { NavLinks } from "./NavLinks";
@@ -19,7 +20,7 @@ export const metadata: Metadata = {
 
 async function OnAir() {
   const tracks = (await getTracks()).toSorted((a, b) => a.firstSeenAt.localeCompare(b.firstSeenAt));
-  return <RadioPlayer tracks={tracks} />;
+  return <RadioPlayer tracks={tracks} thanks={recentContributors(tracks)} />;
 }
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

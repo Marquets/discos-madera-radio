@@ -49,7 +49,7 @@ function loadSpotifyApi() {
   return spotifyApi;
 }
 
-export function RadioPlayer({ tracks }: { tracks: RadioTrack[] }) {
+export function RadioPlayer({ tracks, thanks }: { tracks: RadioTrack[]; thanks: string[] }) {
   const container = useRef<HTMLDivElement>(null);
   const controller = useRef<EmbedController>(null);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -110,11 +110,12 @@ export function RadioPlayer({ tracks }: { tracks: RadioTrack[] }) {
   }, [tracks]);
 
   const track = current === null ? null : tracks[current];
+  const gracias = thanks.length ? ` · Gracias a ${thanks.join(", ")}` : "";
   const ticker = !tracks.length
     ? "Todavía no suena nada · Añade la primera canción a la playlist"
     : playing && track
-      ? `Ahora suena: ${track.title} — ${track.artist} · ¿Solo oyes 30 segundos? Inicia sesión en open.spotify.com`
-      : `Discos Madera Radio · ${tracks.length} canciones en antena · Pulsa ▶ para sintonizar, o dale al play del reproductor`;
+      ? `Ahora suena: ${track.title} — ${track.artist} · ¿Solo oyes 30 segundos? Inicia sesión en open.spotify.com${gracias}`
+      : `Discos Madera Radio · ${tracks.length} canciones en antena · Pulsa ▶ para sintonizar, o dale al play del reproductor${gracias}`;
 
   return (
     <>

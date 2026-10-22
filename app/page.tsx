@@ -13,8 +13,10 @@ export default async function Home() {
     <>
       <h1 className="sr-only">En antena</h1>
       {onAir.length > 0 && (
-        // Ends flush with the grid, so the black stops exactly where the covers begin
-        <div className="bg-black px-4 pb-12 text-accent sm:px-8">
+        // One full screen minus what sits above it, so the covers start just off the
+        // fold and scrolling is what reveals them. svh, not vh, because a phone's
+        // address bar shrinks the viewport and vh would overshoot behind it.
+        <div className="flex min-h-[calc(100svh-var(--chrome))] flex-col justify-center bg-black px-4 pb-12 text-accent sm:px-8">
           <TapeDeck tracks={onAir} />
         </div>
       )}

@@ -3,10 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-const LINKS = [
-  { href: "/", label: "En antena" },
-  { href: "/archivo", label: "Archivo" },
-];
+// Just the archive: the logo is already the way back to the front page
+const LINKS = [{ href: "/archivo", label: "Archivo" }];
 
 export function NavLinks() {
   const pathname = usePathname();

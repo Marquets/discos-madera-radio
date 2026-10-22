@@ -39,7 +39,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             <span className="font-mono text-xs tracking-[0.5em] sm:text-sm">Radio</span>
           </Link>
           <a href={playlistUrl()} target="_blank" rel="noreferrer" className="justify-self-end text-right hover:underline">
-            Añadir
+            Ir
             <br />a la playlist ↗
           </a>
         </header>

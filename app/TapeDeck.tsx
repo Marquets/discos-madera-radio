@@ -68,7 +68,8 @@ export function TapeDeck({ tracks }: { tracks: DeckTrack[] }) {
 
   return (
     <figure className="mx-auto w-full max-w-4xl">
-      <svg viewBox="0 0 736 320" role="img" aria-label={track ? `Sonando: ${track.title} de ${track.artist}` : "Magnetófono de la radio"} className="block w-full rounded-xl bg-black">
+      {/* Recortado por arriba: el lienzo guardaba el hueco del minutero que ya no está */}
+      <svg viewBox="0 58 736 262" role="img" aria-label={track ? `Sonando: ${track.title} de ${track.artist}` : "Magnetófono de la radio"} className="block w-full rounded-xl bg-black">
         {[-2, -1, 0, 1, 2].map((i) => (
           <line key={i} x1={HEAD_X + i * 18} x2={HEAD_X + i * 18} y1="88" y2={i === 0 ? "106" : "100"} stroke={i === 0 ? CREAM : WIRE} strokeWidth="3" />
         ))}

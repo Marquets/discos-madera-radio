@@ -37,7 +37,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             {/* Equal 1fr side columns keep the logo centred however wide the sides grow.
                 Three columns are too tight on a phone, so there it takes its own row. */}
             <NavLinks />
-            <Link href="/" className="order-first col-span-2 flex flex-col items-center gap-1 sm:order-none sm:col-span-1">
+            <Link href="/" className="order-first col-span-2 flex flex-col items-center gap-1 sm:order-none sm:col-span-1 sm:mt-24">
               <Logo className="h-10 w-auto sm:h-14" />
               <span className="font-mono text-xs tracking-[0.5em] sm:text-sm">Radio</span>
             </Link>

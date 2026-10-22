@@ -10,14 +10,16 @@
 /* Alto del deslizante más la cabecera, que van encima del hero dentro de la banda
    negra. El hero lo resta del alto de pantalla para acabar justo a una pantalla.
    Medido sobre la cabecera ya renderizada: en móvil es más alta porque el logo se
-   va a su propia fila. Si cambia su relleno o el tamaño del logo, hay que ajustarlo. */
+   va a su propia fila, y en pantalla grande el logo lleva margen superior para
+   acercarse al magnetófono. Si cambia ese margen, el relleno o el tamaño del logo,
+   hay que volver a medirlo. */
 :root {
   --chrome: 10.75rem;
 }
 
 @media (min-width: 640px) {
   :root {
-    --chrome: 9.75rem;
+    --chrome: 15.75rem;
   }
 }
 

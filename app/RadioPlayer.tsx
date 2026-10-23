@@ -47,6 +47,8 @@ declare global {
   }
 }
 
+const SOURCE_KEY = "radio-source";
+
 let spotifyApi: Promise<IFrameAPI> | undefined;
 
 function loadSpotifyApi() {
@@ -63,6 +65,8 @@ export function RadioPlayer({ tracks, thanks }: { tracks: RadioTrack[]; thanks: 
   const container = useRef<HTMLDivElement>(null);
   const controller = useRef<Player>(null);
   const [source, setSource] = useState<"spotify" | "youtube">("spotify");
+  // Bumped by the Spotify/YouTube switch, so the player is rebuilt with the new choice
+  const [choice, setChoice] = useState(0);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const progress = useRef<Progress>(null);
   const [current, setCurrent] = useState<number | null>(null);
@@ -84,6 +88,9 @@ export function RadioPlayer({ tracks, thanks }: { tracks: RadioTrack[]; thanks: 
     let cancelled = false;
 
     const jingle = new Audio();
+    // A tab only lets an <audio> start while hidden once it has played; until then a jingle
+    // there would wait for the visitor to come back, and the radio with it
+    let jingleReady = false;
     let songsSinceJingle = 0;
     let playingIndex = -1;
 
@@ -129,10 +136,13 @@ export function RadioPlayer({ tracks, thanks }: { tracks: RadioTrack[]; thanks: 
         if (np.index === playingIndex) np = nowPlaying(durations, Date.now() + (durations[np.index] - np.offsetSec) * 1000 + 1)!;
         playAt(np.index, 0);
       };
-      if (!JINGLES.length || ++songsSinceJingle < JINGLE_EVERY) return playNext();
+      if (!JINGLES.length || ++songsSinceJingle < JINGLE_EVERY || (document.hidden && !jingleReady)) return playNext();
       songsSinceJingle = 0;
       jingle.src = JINGLES[Math.floor(Math.random() * JINGLES.length)];
-      jingle.onended = playNext;
+      jingle.onended = () => {
+        jingleReady = true;
+        playNext();
+      };
       // A jingle that can't play must not stop the radio
       jingle.play().catch(playNext);
       // The song player is paused now, which would bring back the ▶ button mid-jingle
@@ -151,6 +161,7 @@ export function RadioPlayer({ tracks, thanks }: { tracks: RadioTrack[]; thanks: 
         jingle.play().then(() => {
           jingle.pause();
           jingle.muted = false;
+          jingleReady = true;
         }, () => {});
       }
       playScheduled();
@@ -177,10 +188,15 @@ export function RadioPlayer({ tracks, thanks }: { tracks: RadioTrack[]; thanks: 
     };
 
     (async () => {
-      // Spotify's embed needs the visitor signed in to open.spotify.com in that browser,
-      // which on a phone nobody is (they use the app), so it stays silent there. YouTube
-      // plays for anyone; it only takes over once the sync has found videos to play.
-      const youtube = matchMedia("(pointer: coarse)").matches && tracks.some((t) => t.youtubeId);
+      // Spotify has no ads, but its embed needs the visitor signed in to open.spotify.com in
+      // that browser, which on a phone nobody is, and it can't start the next song in a hidden
+      // tab. YouTube plays for anyone and carries on hidden, with the odd ad. So YouTube is the
+      // default on phones, Spotify elsewhere, and the switch in the ticker overrides either.
+      let stored: string | null = null;
+      try {
+        stored = localStorage.getItem(SOURCE_KEY);
+      } catch {}
+      const youtube = tracks.some((t) => t.youtubeId) && (stored ? stored === "youtube" : matchMedia("(pointer: coarse)").matches);
       // Both players replace the target node with their iframe, so give them one React doesn't own
       const target = document.createElement("div");
       // Always here, never in the page: moving an iframe reloads it and cuts the music,
@@ -194,6 +210,7 @@ export function RadioPlayer({ tracks, thanks }: { tracks: RadioTrack[]; thanks: 
       } else {
         const api = await loadSpotifyApi();
         if (cancelled) return;
+        setSource("spotify");
         const first = nowPlaying(tracks.map((t) => t.durationSec), Date.now())!;
         api.createController(target, { uri: tracks[first.index].spotifyUri, width: "100%", height: 80, theme: "dark" }, (c) => {
           controller.current = { load: (t, startAt) => c.loadUri(t.spotifyUri, false, startAt), play: () => c.play(), destroy: () => c.destroy() };
@@ -212,7 +229,7 @@ export function RadioPlayer({ tracks, thanks }: { tracks: RadioTrack[]; thanks: 
       controller.current?.destroy();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- tracksKey stands for tracks, see above
-  }, [tracksKey]);
+  }, [tracksKey, choice]);
 
   const track = current === null ? null : tracks[current];
   const gracias = thanks.length ? ` · Gracias a ${thanks.join(", ")}` : "";
@@ -241,6 +258,26 @@ export function RadioPlayer({ tracks, thanks }: { tracks: RadioTrack[]; thanks: 
             ))}
           </div>
         </div>
+        {tracks.some((t) => t.youtubeId) && (
+          <div role="group" aria-label="Escuchar con" className="flex gap-1 pl-4 text-xs">
+            {(["spotify", "youtube"] as const).map((s) => (
+              <button
+                key={s}
+                aria-pressed={source === s}
+                onClick={() => {
+                  if (source === s) return;
+                  try {
+                    localStorage.setItem(SOURCE_KEY, s);
+                  } catch {}
+                  setChoice((c) => c + 1);
+                }}
+                className="px-1.5 py-0.5 hover:text-white aria-pressed:bg-accent aria-pressed:text-black"
+              >
+                {s === "spotify" ? "Spotify" : "YouTube"}
+              </button>
+            ))}
+          </div>
+        )}
         {tracks.length > 0 && !playing && (
           <button onClick={() => tuneIn.current()} aria-label="Sintonizar la radio" className="py-2 pl-4 pr-6 text-lg leading-none hover:text-white">
             ▶

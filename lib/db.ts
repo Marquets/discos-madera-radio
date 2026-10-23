@@ -30,7 +30,7 @@ const SEED = seed as Db;
  * Netlify injects the Blobs context into deployed functions, where the filesystem is read-only.
  * Locally there is no context, so fall back to the JSON file and `npm run dev` needs no setup.
  */
-function blobs(): Store | null {
+export function blobs(): Store | null {
   try {
     // Default (eventual) consistency on purpose: a strong read goes through the Blobs API
     // instead of the edge and hangs if that part of the context never reaches the function.
@@ -45,7 +45,7 @@ function blobs(): Store | null {
  * The page must render even when the store misbehaves. Without this a hanging blob call
  * takes the whole request down with it, which is a worse failure than an outdated list.
  */
-async function withinTimeout<T>(what: string, ms: number, work: Promise<T>): Promise<T | null> {
+export async function withinTimeout<T>(what: string, ms: number, work: Promise<T>): Promise<T | null> {
   let timer: ReturnType<typeof setTimeout> | undefined;
   try {
     return await Promise.race([

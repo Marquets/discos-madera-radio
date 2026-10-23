@@ -3,4 +3,4 @@
 export const JINGLES: string[] = ["/cortinillas/cortinilla1.m4a"];
 
 /** A jingle plays after every this many songs */
-export const JINGLE_EVERY = 5;
+export const JINGLE_EVERY = 3;

@@ -65,11 +65,24 @@
   }
 }
 
-/* En móvil suena YouTube, que es un vídeo: el hueco toma su forma en vez de los 80px
-   del reproductor de Spotify */
+/* Con YouTube suena un vídeo: el hueco toma su forma en vez de los 80px del reproductor
+   de Spotify, y sube entre el logo y el magnetófono para que se vea */
 body:has(#radio[data-source="youtube"]) #reproductor {
   height: auto;
   aspect-ratio: 16 / 9;
+  order: -1;
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+}
+
+/* El vídeo hace el conjunto unos 10.75rem más alto que con Spotify, así que el logo baja
+   la mitad de eso menos para seguir centrado. --chrome se recalcula aquí porque en :root
+   ya quedó resuelto con el margen de antes. */
+@media (min-width: 640px) {
+  body:has(#radio[data-source="youtube"]) {
+    --logo-drop: max(1rem, 50svh - 25.125rem);
+    --chrome: calc(9.75rem + var(--logo-drop));
+  }
 }
 
 @keyframes marquee {

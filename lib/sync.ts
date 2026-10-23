@@ -1,7 +1,8 @@
 import { after, connection } from "next/server";
 import { cache } from "react";
-import { readDb, updateDb } from "./db";
+import { readDb, updateDb, type Track } from "./db";
 import { playlistTracks, trackCover } from "./spotify";
+import { findVideo } from "./youtube";
 
 const STALE_MS = 60 * 1000;
 
@@ -26,7 +27,19 @@ export async function syncPlaylist() {
     db.lastSyncAt = now;
   });
   await fillCovers(db.tracks.filter((t) => !t.cover));
+  if (process.env.YOUTUBE_API_KEY) await fillVideos(db.tracks.filter((t) => t.youtubeId === undefined));
   return added;
+}
+
+async function fillVideos(tracks: Track[]) {
+  // A failed search (quota, network) stays undefined and is retried on the next sync
+  const ids = await Promise.all(tracks.map((t) => findVideo(t.title, t.artist).catch(() => undefined)));
+  await updateDb((db) => {
+    tracks.forEach(({ id }, i) => {
+      const t = db.tracks.find((x) => x.id === id);
+      if (t && ids[i] !== undefined) t.youtubeId = ids[i];
+    });
+  });
 }
 
 async function fillCovers(tracks: { id: string }[]) {

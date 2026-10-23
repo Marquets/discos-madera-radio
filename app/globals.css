@@ -45,6 +45,33 @@
   }
 }
 
+/* El reproductor de Spotify vive en la plantilla y flota en la esquina, así sigue
+   sonando y a la vista al cambiar de página. En la portada se coloca sobre su hueco
+   bajo el magnetófono. Sin anchor positioning se queda en la esquina también ahí. */
+@supports (anchor-name: --a) {
+  #reproductor {
+    anchor-name: --reproductor;
+  }
+
+  body:has(:not([style*="display: none"]) > #reproductor) #radio {
+    position: absolute;
+    position-anchor: --reproductor;
+    top: anchor(top);
+    left: anchor(left);
+    right: auto;
+    bottom: auto;
+    width: anchor-size(width);
+    box-shadow: none;
+  }
+}
+
+/* En móvil suena YouTube, que es un vídeo: el hueco toma su forma en vez de los 80px
+   del reproductor de Spotify */
+body:has(#radio[data-source="youtube"]) #reproductor {
+  height: auto;
+  aspect-ratio: 16 / 9;
+}
+
 @keyframes marquee {
   to {
     transform: translateX(-50%);

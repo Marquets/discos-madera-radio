@@ -18,9 +18,10 @@ export default async function Home() {
         // address bar shrinks the viewport and vh would overshoot behind it.
         <div className="flex min-h-[calc(100svh-var(--chrome))] flex-col bg-black px-4 pb-12 text-accent sm:px-8">
           <TapeDeck tracks={onAir} />
-          {/* RadioPlayer suelta aquí el iframe de Spotify: dice lo mismo que decía el
-              pie "now playing", así que hace de pie además de reproductor */}
-          <div id="reproductor" className="mx-auto mt-6 w-full max-w-md" />
+          {/* Hueco del reproductor de Spotify, que globals.css coloca encima: dice lo
+              mismo que decía el pie "now playing", así que hace de pie además de
+              reproductor. Alto fijo porque el iframe no vive dentro, mide 80px. */}
+          <div id="reproductor" className="mx-auto mt-6 h-20 w-full max-w-md" />
         </div>
       )}
       <div className="px-4 pt-12 sm:px-8">

@@ -14,6 +14,8 @@ export type Track = {
   spotifyUri: string;
   durationSec: number;
   cover?: string;
+  /** Plays the song on phones; null when YouTube had no match */
+  youtubeId?: string | null;
   /** When the radio first saw it in the playlist (Spotify's embed doesn't expose the real added date) */
   firstSeenAt: string;
 };

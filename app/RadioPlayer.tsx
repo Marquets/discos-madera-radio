@@ -2,17 +2,21 @@
 
 import { useEffect, useRef, useState } from "react";
 import { nowPlaying } from "@/lib/schedule";
+import { createYoutubePlayer } from "./youtubePlayer";
 
 export type RadioTrack = {
   id: string;
   spotifyUri: string;
+  youtubeId?: string | null;
   title: string;
   artist: string;
   durationSec: number;
 };
 
 // position and duration in ms
-type Progress = { isPaused: boolean; position: number; duration: number };
+export type Progress = { isPaused: boolean; position: number; duration: number };
+
+export type Player = { load(track: RadioTrack, startAt: number): void; play(): void; destroy(): void };
 
 type EmbedController = {
   loadUri(uri: string, preferVideo: boolean, startAt: number): void;
@@ -56,7 +60,8 @@ function loadSpotifyApi() {
 
 export function RadioPlayer({ tracks, thanks }: { tracks: RadioTrack[]; thanks: string[] }) {
   const container = useRef<HTMLDivElement>(null);
-  const controller = useRef<EmbedController>(null);
+  const controller = useRef<Player>(null);
+  const [source, setSource] = useState<"spotify" | "youtube">("spotify");
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const progress = useRef<Progress>(null);
   const [current, setCurrent] = useState<number | null>(null);
@@ -65,6 +70,10 @@ export function RadioPlayer({ tracks, thanks }: { tracks: RadioTrack[]; thanks: 
 
   // Held in a ref so the ▶ button can reach the scheduler that lives inside the effect
   const tuneIn = useRef<() => void>(() => {});
+
+  // The layout hands over a fresh array whenever the server re-renders it, even with the
+  // same songs, and rebuilding the player on that would cut the music mid-song
+  const tracksKey = tracks.map((t) => `${t.id}:${t.durationSec}:${t.youtubeId}`).join();
 
   // Build the player up front so the radio can try to start on its own, and so the
   // button is instant when it can't: browsers only grant autoplay to origins the
@@ -79,23 +88,24 @@ export function RadioPlayer({ tracks, thanks }: { tracks: RadioTrack[]; thanks: 
       clearTimeout(timer.current);
       const track = tracks[index];
       setCurrent(index);
-      controller.current?.loadUri(track.spotifyUri, false, startAt);
+      controller.current?.load(track, startAt);
       controller.current?.play();
 
-      // Every song starts a second or two after loadUri, so a timer alone cuts its ending.
+      // Every song starts a second or two after loading, so a timer alone cuts its ending.
       // The timer still drives the change, so a 30s preview waits out the full length as before.
       let lastPosition = -1;
       function waitForEnd() {
         const p = progress.current;
-        // An unchanged position means Spotify stopped reporting, i.e. the song is over
+        // An unchanged position means the player stopped reporting, i.e. the song is over
         if (p && !p.isPaused && p.position < p.duration && p.position !== lastPosition) {
           lastPosition = p.position;
           timer.current = setTimeout(waitForEnd, p.duration - p.position + 250);
           return;
         }
-        // From the top rather than the shared clock, which by now is a few seconds into it.
-        // Each song adds that delay, so a long session drifts from other listeners; a reload re-syncs.
-        playAt((index + 1) % tracks.length, 0);
+        // The clock picks the next song in the shuffle, but from the top: by now the clock is a
+        // few seconds into it. Each song adds that delay, so a long session drifts from other
+        // listeners; a reload re-syncs.
+        playAt(nowPlaying(tracks.map((t) => t.durationSec), Date.now())!.index, 0);
       }
       timer.current = setTimeout(waitForEnd, (track.durationSec - startAt) * 1000);
     }
@@ -106,29 +116,44 @@ export function RadioPlayer({ tracks, thanks }: { tracks: RadioTrack[]; thanks: 
     }
     tuneIn.current = playScheduled;
 
+    let tuned = false;
+    const onReady = () => {
+      if (tuned) return;
+      tuned = true;
+      playScheduled();
+    };
+    const onProgress = (p: Progress) => {
+      progress.current = p;
+      setPlaying(!p.isPaused);
+    };
+
     (async () => {
-      const api = await loadSpotifyApi();
-      if (cancelled) return;
-      // Spotify replaces the target node with its iframe, so give it one React doesn't own
+      // Spotify's embed needs the visitor signed in to open.spotify.com in that browser,
+      // which on a phone nobody is (they use the app), so it stays silent there. YouTube
+      // plays for anyone; it only takes over once the sync has found videos to play.
+      const youtube = matchMedia("(pointer: coarse)").matches && tracks.some((t) => t.youtubeId);
+      // Both players replace the target node with their iframe, so give them one React doesn't own
       const target = document.createElement("div");
-      // Under the tape deck on the front page; anywhere else it floats in the corner
-      (document.getElementById("reproductor") ?? container.current!).append(target);
-      const first = nowPlaying(tracks.map((t) => t.durationSec), Date.now())!;
-      let tuned = false;
-      api.createController(target, { uri: tracks[first.index].spotifyUri, width: "100%", height: 80, theme: "dark" }, (c) => {
-        controller.current = c;
-        // The only signal the browser actually let us play; play() itself reports nothing
-        c.addListener("playback_started", () => setPlaying(true));
-        c.addListener("playback_update", (e) => {
-          progress.current = e.data;
-          setPlaying(!e.data.isPaused);
+      // Always here, never in the page: moving an iframe reloads it and cuts the music,
+      // so globals.css lays this box over the front page's slot instead
+      container.current!.append(target);
+      if (youtube) {
+        const player = await createYoutubePlayer(target, { ready: onReady, progress: onProgress });
+        if (cancelled) return player.destroy();
+        controller.current = player;
+        setSource("youtube");
+      } else {
+        const api = await loadSpotifyApi();
+        if (cancelled) return;
+        const first = nowPlaying(tracks.map((t) => t.durationSec), Date.now())!;
+        api.createController(target, { uri: tracks[first.index].spotifyUri, width: "100%", height: 80, theme: "dark" }, (c) => {
+          controller.current = { load: (t, startAt) => c.loadUri(t.spotifyUri, false, startAt), play: () => c.play(), destroy: () => c.destroy() };
+          // The only signal the browser actually let us play; play() itself reports nothing
+          c.addListener("playback_started", () => setPlaying(true));
+          c.addListener("playback_update", (e) => onProgress(e.data));
+          c.addListener("ready", onReady);
         });
-        c.addListener("ready", () => {
-          if (tuned) return;
-          tuned = true;
-          playScheduled();
-        });
-      });
+      }
     })();
 
     return () => {
@@ -136,14 +161,15 @@ export function RadioPlayer({ tracks, thanks }: { tracks: RadioTrack[]; thanks: 
       clearTimeout(timer.current);
       controller.current?.destroy();
     };
-  }, [tracks]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- tracksKey stands for tracks, see above
+  }, [tracksKey]);
 
   const track = current === null ? null : tracks[current];
   const gracias = thanks.length ? ` · Gracias a ${thanks.join(", ")}` : "";
   const ticker = !tracks.length
     ? "Todavía no suena nada · Añade la primera canción a la playlist"
     : playing && track
-      ? `Ahora suena: ${track.title} — ${track.artist} · ¿Solo oyes 30 segundos? Inicia sesión en open.spotify.com${gracias}`
+      ? `Ahora suena: ${track.title} — ${track.artist}${source === "spotify" ? " · ¿Solo oyes 30 segundos? Inicia sesión en open.spotify.com" : ""}${gracias}`
       : `Discos Madera Radio · ${tracks.length} canciones en antena · Pulsa ▶ para sintonizar, o dale al play del reproductor${gracias}`;
 
   return (
@@ -178,10 +204,13 @@ export function RadioPlayer({ tracks, thanks }: { tracks: RadioTrack[]; thanks: 
       </div>
       <div
         ref={container}
+        id="radio"
+        data-source={source}
         // Visible as soon as a track is loaded, never gated on `playing`: on iOS and Android
         // the gesture has to happen inside Spotify's own iframe, so hiding it until playback
         // is confirmed leaves a phone with no way to ever start the radio.
-        className={`fixed right-4 bottom-4 z-10 w-[min(360px,calc(100%-2rem))] overflow-hidden rounded-xl shadow-xl empty:hidden ${current === null ? "invisible" : ""}`}
+        // YouTube needs a video-shaped box; Spotify's iframe sets its own 80px height
+        className={`fixed right-4 bottom-4 z-10 w-[min(360px,calc(100%-2rem))] overflow-hidden rounded-xl shadow-xl empty:hidden ${source === "youtube" ? "aspect-video" : ""} ${current === null ? "invisible" : ""}`}
       />
     </>
   );

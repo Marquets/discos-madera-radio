@@ -1,7 +1,9 @@
 import { isoWeek } from "./dates";
 import { blobs, withinTimeout } from "./db";
 
-export const SIZE = 64;
+// Wide like a computer screen, since the canvas fills the space under the menu
+export const COLS = 128;
+export const ROWS = 64;
 export const COOLDOWN_MS = 30_000;
 // The poster's orange and browns first, then a few more to draw with. Index 0 is the
 // empty canvas. One hex digit per pixel caps it at 16 colours.
@@ -18,11 +20,12 @@ export const PALETTE = [
   { hex: "#b05fc8", name: "morado" },
 ];
 
-// Row by row, one hex digit per pixel: 4096 characters, cheap enough to send on every poll
-const EMPTY = "0".repeat(SIZE * SIZE);
+// Row by row, one hex digit per pixel: 8192 characters, cheap enough to send on every poll
+const EMPTY = "0".repeat(COLS * ROWS);
 
 // A new canvas every ISO week; the old ones stay in the store under their own key
-const key = () => `lienzo/${isoWeek(new Date().toISOString()).key}`;
+// "pixel/" rather than the first "lienzo/" ones, which were a 64×64 grid of another length
+const key = () => `pixel/${isoWeek(new Date().toISOString()).key}`;
 
 // Locally there is no blob store and a single process, so memory will do (reset on restart)
 const local: Map<string, string> = ((globalThis as { lienzo?: Map<string, string> }).lienzo ??= new Map());

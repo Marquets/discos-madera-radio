@@ -1,5 +1,5 @@
 import { connection } from "next/server";
-import { COOLDOWN_MS, PALETTE, SIZE, readCanvas } from "@/lib/canvas";
+import { COLS, COOLDOWN_MS, PALETTE, ROWS, readCanvas } from "@/lib/canvas";
 import { Lienzo } from "./Lienzo";
 
 // The stored canvas resolves in milliseconds, same as the track list
@@ -9,11 +9,16 @@ export default async function CanvasPage() {
   await connection();
   const pixels = await readCanvas();
 
+  // Exactly one screen minus the header as measured on this page (no logo drop, see
+  // globals.css), so the canvas runs from under the menu to the bottom edge; -mb-16 covers
+  // the padding the layout's <main> leaves
   return (
-    <div className="px-4 sm:px-8">
-      <h1 className="pt-8 text-center font-display text-6xl uppercase leading-none sm:text-8xl">Deja tu píxel</h1>
-      <p className="pb-8 pt-4 text-center font-mono text-sm uppercase">Un píxel cada {COOLDOWN_MS / 1000} segundos · Se borra cada lunes</p>
-      <Lienzo initial={pixels} size={SIZE} palette={PALETTE} cooldownMs={COOLDOWN_MS} />
+    <div className="-mb-16 h-[calc(100svh-10.75rem)] bg-black text-accent sm:h-[calc(100svh-10.25rem)]">
+      <Lienzo initial={pixels} cols={COLS} rows={ROWS} palette={PALETTE} cooldownMs={COOLDOWN_MS}>
+        {/* Still the page's heading for screen readers, just not shown */}
+        <h1 className="sr-only">Deja tu píxel</h1>
+        <p>Se borra cada lunes</p>
+      </Lienzo>
     </div>
   );
 }

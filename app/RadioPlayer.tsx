@@ -92,6 +92,7 @@ export function RadioPlayer({ tracks, thanks }: { tracks: RadioTrack[]; thanks: 
     // there would wait for the visitor to come back, and the radio with it
     let jingleReady = false;
     let songsSinceJingle = 0;
+    let jinglesPlayed = 0;
     let playingIndex = -1;
 
     // Declarations, not consts, so they can schedule each other
@@ -138,7 +139,7 @@ export function RadioPlayer({ tracks, thanks }: { tracks: RadioTrack[]; thanks: 
       };
       if (!JINGLES.length || ++songsSinceJingle < JINGLE_EVERY || (document.hidden && !jingleReady)) return playNext();
       songsSinceJingle = 0;
-      jingle.src = JINGLES[Math.floor(Math.random() * JINGLES.length)];
+      jingle.src = JINGLES[jinglesPlayed++ % JINGLES.length];
       jingle.onended = () => {
         jingleReady = true;
         playNext();

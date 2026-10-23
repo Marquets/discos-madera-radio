@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { JINGLE_EVERY, JINGLES } from "@/lib/jingles";
 import { nowPlaying } from "@/lib/schedule";
 import { createYoutubePlayer } from "./youtubePlayer";
 
@@ -82,39 +83,78 @@ export function RadioPlayer({ tracks, thanks }: { tracks: RadioTrack[]; thanks: 
     if (!tracks.length) return;
     let cancelled = false;
 
+    const jingle = new Audio();
+    let songsSinceJingle = 0;
+    let playingIndex = -1;
+
     // Declarations, not consts, so they can schedule each other
     function playAt(index: number, startAt: number) {
       // Re-tuning after a blocked autoplay would otherwise leave two chains running
       clearTimeout(timer.current);
+      jingle.pause();
+      // So the new song's first "paused at 0" report isn't taken for the end of the old one
+      progress.current = null;
       const track = tracks[index];
+      playingIndex = index;
       setCurrent(index);
       controller.current?.load(track, startAt);
       controller.current?.play();
 
-      // Every song starts a second or two after loading, so a timer alone cuts its ending.
-      // The timer still drives the change, so a 30s preview waits out the full length as before.
+      // Backup for when the player never reports an end, like a 30s preview that waits out
+      // the full length. Every song starts a second or two after loading, so this timer
+      // alone would cut its ending; it re-arms until the player stops reporting progress.
       let lastPosition = -1;
       function waitForEnd() {
         const p = progress.current;
-        // An unchanged position means the player stopped reporting, i.e. the song is over
         if (p && !p.isPaused && p.position < p.duration && p.position !== lastPosition) {
           lastPosition = p.position;
           timer.current = setTimeout(waitForEnd, p.duration - p.position + 250);
           return;
         }
-        // The clock picks the next song in the shuffle, but from the top: by now the clock is a
-        // few seconds into it. Each song adds that delay, so a long session drifts from other
-        // listeners; a reload re-syncs.
-        playAt(nowPlaying(tracks.map((t) => t.durationSec), Date.now())!.index, 0);
+        next();
       }
       timer.current = setTimeout(waitForEnd, (track.durationSec - startAt) * 1000);
+    }
+
+    function next() {
+      clearTimeout(timer.current);
+      progress.current = null;
+      // The clock picks the next song in the shuffle, but from the top: by now the clock is a
+      // few seconds into it. Each song and jingle adds that delay, so a long session drifts
+      // from other listeners; a reload re-syncs.
+      const playNext = () => {
+        const durations = tracks.map((t) => t.durationSec);
+        let np = nowPlaying(durations, Date.now())!;
+        // A song that ends a moment before the clock does would otherwise play again
+        if (np.index === playingIndex) np = nowPlaying(durations, Date.now() + (durations[np.index] - np.offsetSec) * 1000 + 1)!;
+        playAt(np.index, 0);
+      };
+      if (!JINGLES.length || ++songsSinceJingle < JINGLE_EVERY) return playNext();
+      songsSinceJingle = 0;
+      jingle.src = JINGLES[Math.floor(Math.random() * JINGLES.length)];
+      jingle.onended = playNext;
+      // A jingle that can't play must not stop the radio
+      jingle.play().catch(playNext);
+      // The song player is paused now, which would bring back the ▶ button mid-jingle
+      setPlaying(true);
     }
 
     function playScheduled() {
       const np = nowPlaying(tracks.map((t) => t.durationSec), Date.now())!;
       playAt(np.index, Math.floor(np.offsetSec));
     }
-    tuneIn.current = playScheduled;
+    tuneIn.current = () => {
+      // Phones only let an <audio> play from a tap, so unlock the jingle player on this one
+      if (JINGLES.length) {
+        jingle.src = JINGLES[0];
+        jingle.muted = true;
+        jingle.play().then(() => {
+          jingle.pause();
+          jingle.muted = false;
+        }, () => {});
+      }
+      playScheduled();
+    };
 
     let tuned = false;
     const onReady = () => {
@@ -123,8 +163,17 @@ export function RadioPlayer({ tracks, thanks }: { tracks: RadioTrack[]; thanks: 
       playScheduled();
     };
     const onProgress = (p: Progress) => {
+      // The ended song keeps reporting "paused" for a while; during a jingle that's noise
+      if (!jingle.paused) return;
+      const prev = progress.current;
       progress.current = p;
       setPlaying(!p.isPaused);
+      // Move on the moment the player says the song ended. Its messages arrive even in a
+      // background tab, where Chrome slows timers down so much that the next song never came.
+      // Spotify reports the end as paused at 0, YouTube as paused at the full length. Previews
+      // last 30s and are left to the timer, or they'd race through the playlist.
+      const ended = p.isPaused && (p.position === 0 || p.position >= p.duration - 500);
+      if (ended && prev && !prev.isPaused && prev.duration > 35_000 && prev.duration - prev.position < 2000) next();
     };
 
     (async () => {
@@ -159,6 +208,7 @@ export function RadioPlayer({ tracks, thanks }: { tracks: RadioTrack[]; thanks: 
     return () => {
       cancelled = true;
       clearTimeout(timer.current);
+      jingle.pause();
       controller.current?.destroy();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- tracksKey stands for tracks, see above

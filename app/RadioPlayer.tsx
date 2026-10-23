@@ -11,6 +11,9 @@ export type RadioTrack = {
   durationSec: number;
 };
 
+// position and duration in ms
+type Progress = { isPaused: boolean; position: number; duration: number };
+
 type EmbedController = {
   loadUri(uri: string, preferVideo: boolean, startAt: number): void;
   play(): void;
@@ -19,7 +22,7 @@ type EmbedController = {
   addListener(event: "ready" | "playback_started", handler: () => void): void;
   // The API wraps every payload as { data }, and playback_update is the only event
   // that reports pausing, including a pause done from Spotify's own controls
-  addListener(event: "playback_update", handler: (e: { data: { isPaused: boolean } }) => void): void;
+  addListener(event: "playback_update", handler: (e: { data: Progress }) => void): void;
   destroy(): void;
 };
 
@@ -55,6 +58,7 @@ export function RadioPlayer({ tracks, thanks }: { tracks: RadioTrack[]; thanks: 
   const container = useRef<HTMLDivElement>(null);
   const controller = useRef<EmbedController>(null);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const progress = useRef<Progress>(null);
   const [current, setCurrent] = useState<number | null>(null);
   // Separate from `current`: the browser may refuse to play what we just loaded
   const [playing, setPlaying] = useState(false);
@@ -69,17 +73,36 @@ export function RadioPlayer({ tracks, thanks }: { tracks: RadioTrack[]; thanks: 
     if (!tracks.length) return;
     let cancelled = false;
 
-    // A declaration, not a const, so it can schedule itself
-    function playScheduled() {
+    // Declarations, not consts, so they can schedule each other
+    function playAt(index: number, startAt: number) {
       // Re-tuning after a blocked autoplay would otherwise leave two chains running
       clearTimeout(timer.current);
-      const np = nowPlaying(tracks.map((t) => t.durationSec), Date.now())!;
-      const track = tracks[np.index];
-      setCurrent(np.index);
-      controller.current?.loadUri(track.spotifyUri, false, Math.floor(np.offsetSec));
+      const track = tracks[index];
+      setCurrent(index);
+      controller.current?.loadUri(track.spotifyUri, false, startAt);
       controller.current?.play();
-      // Follow the shared clock rather than player events, so 30s previews stay in sync too
-      timer.current = setTimeout(playScheduled, (track.durationSec - np.offsetSec) * 1000 + 500);
+
+      // Every song starts a second or two after loadUri, so a timer alone cuts its ending.
+      // The timer still drives the change, so a 30s preview waits out the full length as before.
+      let lastPosition = -1;
+      function waitForEnd() {
+        const p = progress.current;
+        // An unchanged position means Spotify stopped reporting, i.e. the song is over
+        if (p && !p.isPaused && p.position < p.duration && p.position !== lastPosition) {
+          lastPosition = p.position;
+          timer.current = setTimeout(waitForEnd, p.duration - p.position + 250);
+          return;
+        }
+        // From the top rather than the shared clock, which by now is a few seconds into it.
+        // Each song adds that delay, so a long session drifts from other listeners; a reload re-syncs.
+        playAt((index + 1) % tracks.length, 0);
+      }
+      timer.current = setTimeout(waitForEnd, (track.durationSec - startAt) * 1000);
+    }
+
+    function playScheduled() {
+      const np = nowPlaying(tracks.map((t) => t.durationSec), Date.now())!;
+      playAt(np.index, Math.floor(np.offsetSec));
     }
     tuneIn.current = playScheduled;
 
@@ -96,7 +119,10 @@ export function RadioPlayer({ tracks, thanks }: { tracks: RadioTrack[]; thanks: 
         controller.current = c;
         // The only signal the browser actually let us play; play() itself reports nothing
         c.addListener("playback_started", () => setPlaying(true));
-        c.addListener("playback_update", (e) => setPlaying(!e.data.isPaused));
+        c.addListener("playback_update", (e) => {
+          progress.current = e.data;
+          setPlaying(!e.data.isPaused);
+        });
         c.addListener("ready", () => {
           if (tuned) return;
           tuned = true;

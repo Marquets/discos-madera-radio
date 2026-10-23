@@ -10,35 +10,38 @@
 /* Alto del deslizante más la cabecera, que van encima del hero dentro de la banda
    negra. El hero lo resta del alto de pantalla para acabar justo a una pantalla.
    Medido sobre la cabecera ya renderizada: en móvil es más alta porque el logo se
-   va a su propia fila, y en pantalla grande el logo lleva margen superior para
-   acercarse al magnetófono. Si cambia ese margen, el relleno o el tamaño del logo,
-   hay que volver a medirlo. */
+   va a su propia fila, y en pantalla grande se le suma el margen del logo
+   (--logo-drop, abajo). Si cambia el relleno o el tamaño del logo, hay que volver a
+   medirlo. */
 :root {
   --chrome: 10.75rem;
 }
 
+/* Margen con el que el logo baja hasta el magnetófono. Centra en la pantalla el
+   conjunto de logo, magnetófono y reproductor, que mide unas 33rem: la mitad más los
+   3.25rem que hay sobre el logo sin margen dan los 19.75rem. Medido con el
+   magnetófono a su ancho máximo; en ventanas estrechas el conjunto es más bajo y
+   queda un poco alto. Programas mide casi lo mismo con el tocadiscos y Coming soon. */
 @media (min-width: 640px) {
   :root {
-    --chrome: 17.50rem;
+    --logo-drop: max(1rem, 50svh - 19.75rem);
+    --chrome: calc(9.75rem + var(--logo-drop));
   }
 }
 
-/* El logo baja a buscar el magnetófono, pero solo en la portada: es la única página
-   con hero, y se reconoce por el hueco del reproductor. En el archivo la cabecera se
-   queda arriba como cualquier otra.
+/* El logo baja a buscar el magnetófono, pero solo en las páginas con hero: la portada,
+   que se reconoce por el hueco del reproductor, y Programas, por el tocadiscos. En el
+   archivo la cabecera se queda arriba como cualquier otra.
 
    El magnetófono se apoya arriba del hero, no centrado: así el hueco con el logo es
-   pequeño y constante, y es este margen el que centra verticalmente el conjunto de
-   logo, magnetófono y reproductor. Va atado a --chrome de la regla de arriba: si
-   cambia uno, hay que volver a medir el otro.
-
-   El margen está calculado para centrar el conjunto en una pantalla de portátil. El
-   conjunto mide un alto fijo, así que en ventanas muy altas o muy bajas quedará algo
-   descentrado: centrarlo de verdad pediría meter el logo dentro del hero, y vive en
-   la cabecera porque es el enlace a la portada de todas las páginas. */
+   pequeño y constante, y es este margen el que centra verticalmente el conjunto. El
+   logo vive en la cabecera, y no dentro del hero, porque es el enlace a la portada de
+   todas las páginas. */
 @media (min-width: 640px) {
-  body:has(#reproductor) header a[href="/"] {
-    margin-top: 7.75rem;
+  /* Al navegar, Next deja la página anterior en el DOM con display: none en su raíz, y
+     sin el :not el logo seguía bajado en el archivo tras venir de la portada */
+  body:has(:not([style*="display: none"]) > :is(#reproductor, #tocadiscos)) header a[href="/"] {
+    margin-top: var(--logo-drop);
   }
 }
 

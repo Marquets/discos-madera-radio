@@ -2,6 +2,7 @@ import { after, connection } from "next/server";
 import { cache } from "react";
 import { readDb, updateDb, type Track } from "./db";
 import { playlistTracks, trackCover } from "./spotify";
+import { VIDEO_OVERRIDES } from "./videos";
 import { findVideo } from "./youtube";
 
 const STALE_MS = 60 * 1000;
@@ -24,6 +25,7 @@ export async function syncPlaylist() {
       db.tracks.push({ ...t, firstSeenAt: now });
       added++;
     }
+    for (const t of db.tracks) if (VIDEO_OVERRIDES[t.id]) t.youtubeId = VIDEO_OVERRIDES[t.id];
     db.lastSyncAt = now;
   });
   await fillCovers(db.tracks.filter((t) => !t.cover));

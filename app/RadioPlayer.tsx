@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { JINGLE_EVERY, JINGLES } from "@/lib/jingles";
 import { nowPlaying } from "@/lib/schedule";
+import { useStored } from "./useStored";
 import { createYoutubePlayer } from "./youtubePlayer";
 
 export type RadioTrack = {
@@ -17,7 +18,14 @@ export type RadioTrack = {
 // position and duration in ms
 export type Progress = { isPaused: boolean; position: number; duration: number };
 
-export type Player = { load(track: RadioTrack, startAt: number): void; play(): void; destroy(): void };
+// setVolume takes 0–100. Spotify's embed has no volume or mute, so its player leaves both out.
+export type Player = {
+  load(track: RadioTrack, startAt: number): void;
+  play(): void;
+  setVolume?(volume: number): void;
+  setMuted?(muted: boolean): void;
+  destroy(): void;
+};
 
 type EmbedController = {
   loadUri(uri: string, preferVideo: boolean, startAt: number): void;
@@ -48,6 +56,11 @@ declare global {
 }
 
 const SOURCE_KEY = "radio-source";
+const VOLUME_KEY = "radio-volume";
+const JINGLE_KEY = "radio-cortinilla";
+const ANIM_KEY = "radio-animacion";
+// The logo's animations while a jingle plays, one per jingle in this order; globals.css has each one
+const LOGO_ANIMS = ["baile", "ondas", "cinta", "neon", "glitch", "dibujo"];
 
 let spotifyApi: Promise<IFrameAPI> | undefined;
 
@@ -75,6 +88,25 @@ export function RadioPlayer({ tracks, thanks }: { tracks: RadioTrack[]; thanks: 
 
   // Held in a ref so the ▶ button can reach the scheduler that lives inside the effect
   const tuneIn = useRef<() => void>(() => {});
+  const [storedVolume, setStoredVolume] = useStored(VOLUME_KEY);
+  const volume = storedVolume !== null && /^\d+$/.test(storedVolume) ? Math.min(100, Number(storedVolume)) : 100;
+  // The effect builds the players once, so it reads the latest volume from here
+  const volumeRef = useRef(volume);
+  const applyVolume = useRef<(volume: number) => void>(() => {});
+  // Not remembered: coming back to a silent radio would look broken
+  const [muted, setMuted] = useState(false);
+  const mutedRef = useRef(false);
+  const applyMute = useRef<(muted: boolean) => void>(() => {});
+
+  function toggleMute() {
+    mutedRef.current = !muted;
+    setMuted(!muted);
+    applyMute.current(!muted);
+  }
+  useEffect(() => {
+    volumeRef.current = volume;
+    applyVolume.current(volume);
+  }, [volume]);
 
   // The layout hands over a fresh array whenever the server re-renders it, even with the
   // same songs, and rebuilding the player on that would cut the music mid-song
@@ -88,18 +120,60 @@ export function RadioPlayer({ tracks, thanks }: { tracks: RadioTrack[]; thanks: 
     let cancelled = false;
 
     const jingle = new Audio();
+    // globals.css makes the logo dance while this is on; the logo lives in the header, out of reach
+    const showJingle = (on: boolean) => {
+      const root = document.documentElement;
+      if (on) {
+        // How far the logo has to travel to sit in the middle of the screen, wherever the page is scrolled
+        const logo = document.querySelector('header a[href="/"]')?.getBoundingClientRect();
+        if (logo) {
+          root.style.setProperty("--logo-dx", `${innerWidth / 2 - (logo.left + logo.width / 2)}px`);
+          root.style.setProperty("--logo-dy", `${innerHeight / 2 - (logo.top + logo.height / 2)}px`);
+        }
+      }
+      root.toggleAttribute("data-cortinilla", on);
+      if (!on) return root.removeAttribute("data-anim");
+      // One of the logo's animations for the whole jingle, taking turns; remembered like the
+      // jingles' order, so a new visit carries on with the next one
+      root.style.setProperty("--fase", `${Number.isFinite(jingle.duration) ? jingle.duration : 16}s`);
+      let turn = 0;
+      try {
+        turn = Number(localStorage.getItem(ANIM_KEY)) || 0;
+      } catch {}
+      root.dataset.anim = LOGO_ANIMS[turn % LOGO_ANIMS.length];
+      try {
+        localStorage.setItem(ANIM_KEY, String((turn + 1) % LOGO_ANIMS.length));
+      } catch {}
+    };
+    jingle.volume = volumeRef.current / 100;
+    applyVolume.current = (v) => {
+      jingle.volume = v / 100;
+      controller.current?.setVolume?.(v);
+    };
     // A tab only lets an <audio> start while hidden once it has played; until then a jingle
     // there would wait for the visitor to come back, and the radio with it
     let jingleReady = false;
     let songsSinceJingle = 0;
+    // Remembered in the browser, so the order carries on across visits instead of starting
+    // over with the first one every time
     let jinglesPlayed = 0;
+    try {
+      jinglesPlayed = Number(localStorage.getItem(JINGLE_KEY)) || 0;
+    } catch {}
     let playingIndex = -1;
+    // Only YouTube has a mute; with Spotify the button isn't shown
+    let usingYoutube = false;
+    applyMute.current = (m) => {
+      jingle.muted = m;
+      controller.current?.setMuted?.(m);
+    };
 
     // Declarations, not consts, so they can schedule each other
     function playAt(index: number, startAt: number) {
       // Re-tuning after a blocked autoplay would otherwise leave two chains running
       clearTimeout(timer.current);
       jingle.pause();
+      showJingle(false);
       // So the new song's first "paused at 0" report isn't taken for the end of the old one
       progress.current = null;
       const track = tracks[index];
@@ -140,12 +214,24 @@ export function RadioPlayer({ tracks, thanks }: { tracks: RadioTrack[]; thanks: 
       if (!JINGLES.length || ++songsSinceJingle < JINGLE_EVERY || (document.hidden && !jingleReady)) return playNext();
       songsSinceJingle = 0;
       jingle.src = JINGLES[jinglesPlayed++ % JINGLES.length];
+      try {
+        localStorage.setItem(JINGLE_KEY, String(jinglesPlayed % JINGLES.length));
+      } catch {}
       jingle.onended = () => {
         jingleReady = true;
         playNext();
       };
       // A jingle that can't play must not stop the radio
-      jingle.play().catch(playNext);
+      const forced = jingleForced;
+      jingleForced = false;
+      jingle.play().then(
+        () => showJingle(true),
+        () => {
+          // Autoplay said no to a forced one; the ▶ button tries it again
+          if (forced) forceJingle = true;
+          playNext();
+        },
+      );
       // The song player is paused now, which would bring back the ▶ button mid-jingle
       setPlaying(true);
     }
@@ -154,25 +240,36 @@ export function RadioPlayer({ tracks, thanks }: { tracks: RadioTrack[]; thanks: 
       const np = nowPlaying(tracks.map((t) => t.durationSec), Date.now())!;
       playAt(np.index, Math.floor(np.offsetSec));
     }
+    // ?cortinilla in the address plays a jingle right away instead of waiting for it, to try them out
+    let forceJingle = JINGLES.length > 0 && new URLSearchParams(location.search).has("cortinilla");
+    let jingleForced = false;
+    function start() {
+      if (!forceJingle) return playScheduled();
+      forceJingle = false;
+      jingleForced = true;
+      songsSinceJingle = JINGLE_EVERY - 1;
+      next();
+    }
+
     tuneIn.current = () => {
       // Phones only let an <audio> play from a tap, so unlock the jingle player on this one
-      if (JINGLES.length) {
+      if (JINGLES.length && !forceJingle) {
         jingle.src = JINGLES[0];
         jingle.muted = true;
         jingle.play().then(() => {
           jingle.pause();
-          jingle.muted = false;
+          jingle.muted = usingYoutube && mutedRef.current;
           jingleReady = true;
         }, () => {});
       }
-      playScheduled();
+      start();
     };
 
     let tuned = false;
     const onReady = () => {
       if (tuned) return;
       tuned = true;
-      playScheduled();
+      start();
     };
     const onProgress = (p: Progress) => {
       // The ended song keeps reporting "paused" for a while; during a jingle that's noise
@@ -207,6 +304,9 @@ export function RadioPlayer({ tracks, thanks }: { tracks: RadioTrack[]; thanks: 
         const player = await createYoutubePlayer(target, { ready: onReady, progress: onProgress });
         if (cancelled) return player.destroy();
         controller.current = player;
+        usingYoutube = true;
+        applyVolume.current(volumeRef.current);
+        applyMute.current(mutedRef.current);
         setSource("youtube");
       } else {
         const api = await loadSpotifyApi();
@@ -227,6 +327,7 @@ export function RadioPlayer({ tracks, thanks }: { tracks: RadioTrack[]; thanks: 
       cancelled = true;
       clearTimeout(timer.current);
       jingle.pause();
+      showJingle(false);
       controller.current?.destroy();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- tracksKey stands for tracks, see above
@@ -242,7 +343,7 @@ export function RadioPlayer({ tracks, thanks }: { tracks: RadioTrack[]; thanks: 
 
   return (
     <>
-      <div className="flex items-center bg-black font-mono text-sm uppercase text-accent">
+      <div className="ticker flex items-center bg-black font-mono text-sm uppercase text-accent">
         <p className="sr-only" aria-live="polite">
           {ticker}
         </p>
@@ -278,6 +379,29 @@ export function RadioPlayer({ tracks, thanks }: { tracks: RadioTrack[]; thanks: 
               </button>
             ))}
           </div>
+        )}
+        {/* Spotify's embed can't be turned down from outside, so only YouTube gets a slider */}
+        {source === "youtube" && (
+          <label className="flex items-center gap-2 pl-4 text-xs">
+            <span aria-hidden>Vol</span>
+            <input
+              type="range"
+              min={0}
+              max={100}
+              value={volume}
+              onChange={(e) => setStoredVolume(e.target.value)}
+              aria-label="Volumen"
+              className="w-20 accent-accent"
+            />
+          </label>
+        )}
+        {source === "youtube" && playing && (
+          <button onClick={toggleMute} aria-pressed={muted} aria-label={muted ? "Activar el sonido" : "Silenciar"} className="py-2 pl-4 hover:text-white">
+            <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+              <path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor" />
+              {muted ? <path d="M16 9l6 6M22 9l-6 6" /> : <path d="M16 8.5a5 5 0 0 1 0 7M19 5.5a9 9 0 0 1 0 13" />}
+            </svg>
+          </button>
         )}
         {tracks.length > 0 && !playing && (
           <button onClick={() => tuneIn.current()} aria-label="Sintonizar la radio" className="py-2 pl-4 pr-6 text-lg leading-none hover:text-white">

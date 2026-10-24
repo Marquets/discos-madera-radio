@@ -95,8 +95,246 @@ body:has(#radio[data-source="youtube"]) #reproductor {
   animation: marquee 45s linear infinite;
 }
 
+/* Los mensajes de los oyentes cruzan el hero de lado a lado, salen de la pantalla y
+   vuelven por el mismo camino. Cada uno trae sus extremos en --x0/--y0 y --x1/--y1 (en %),
+   bien fuera del hero y en un ángulo distinto. Lineal, porque la vuelta pasa fuera de la
+   vista y frenar ahí solo haría esperar más. */
+@keyframes ir-y-volver {
+  from {
+    left: var(--x0);
+    top: var(--y0);
+  }
+  to {
+    left: var(--x1);
+    top: var(--y1);
+  }
+}
+
+.mensaje {
+  left: var(--cx);
+  top: var(--cy);
+  transform: translate(-50%, -50%);
+  animation: ir-y-volver linear infinite alternate;
+}
+
+/* Mientras suena una cortinilla el logo, ya en el centro, hace una de estas animaciones,
+   por turnos: RadioPlayer las va poniendo en data-anim (baile, ondas, cinta, neon, glitch, dibujo).
+   --fase es lo que dura la cortinilla, para las que van de principio a fin. */
+
+/* overflow visible: al saltar o brillar, el logo se sale del lienzo del SVG y se cortaba */
+html[data-cortinilla] header a[href="/"] svg {
+  overflow: visible;
+}
+
+/* Baile: DISCOS y MADERA saltan a destiempo y el conjunto late. El salto va en unidades
+   del SVG: 40 son unos 11px con el logo a su tamaño grande. translate, y no transform,
+   porque DISCOS ya lleva un transform en el SVG para centrarse y uno de CSS lo pisaría. */
+@keyframes salto {
+  to {
+    translate: 0 -40px;
+  }
+}
+
+@keyframes latido {
+  to {
+    scale: 1.12;
+  }
+}
+
+html[data-anim="baile"] header a[href="/"] svg {
+  animation: latido 0.3s ease-in-out infinite alternate;
+}
+
+html[data-anim="baile"] header a[href="/"] svg > :is(g, path) {
+  animation: salto 0.3s ease-in-out infinite alternate;
+}
+
+html[data-anim="baile"] header a[href="/"] svg > path {
+  animation-delay: -0.3s;
+}
+
+/* Ondas: anillos que salen de detrás del logo y se desvanecen, como la señal de una antena */
+@keyframes onda {
+  from {
+    scale: 0.4;
+    opacity: 1;
+  }
+  to {
+    scale: 2.6;
+    opacity: 0;
+  }
+}
+
+header a[href="/"]::before,
+header a[href="/"]::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 40%;
+  z-index: -1;
+  width: 100%;
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  border: 2px solid var(--color-accent);
+  border-radius: 50%;
+  opacity: 0;
+  pointer-events: none;
+}
+
+html[data-anim="ondas"] header a[href="/"]::before,
+html[data-anim="ondas"] header a[href="/"]::after {
+  animation: onda 1.6s ease-out infinite;
+}
+
+html[data-anim="ondas"] header a[href="/"]::after {
+  animation-delay: 0.8s;
+}
+
+/* Cinta: el logo se ondula como una cinta gastada (el filtro #logo-cinta vive en Logo.tsx)
+   y de vez en cuando da un tirón */
+@keyframes tiron {
+  0%,
+  86%,
+  100% {
+    skew: 0;
+    translate: 0;
+  }
+  88% {
+    skew: -8deg;
+    translate: -6px 0;
+  }
+  92% {
+    skew: 5deg;
+    translate: 4px 0;
+  }
+}
+
+html[data-anim="cinta"] header a[href="/"] svg {
+  filter: url(#logo-cinta);
+  animation: tiron 1.4s linear infinite;
+}
+
+/* Neón: arranca parpadeando y se queda brillando con un halo naranja */
+@keyframes neon {
+  0%,
+  6%,
+  10%,
+  16%,
+  22% {
+    opacity: 0.15;
+  }
+  4%,
+  8%,
+  12%,
+  20%,
+  26%,
+  100% {
+    opacity: 1;
+  }
+}
+
+html[data-anim="neon"] header a[href="/"] svg {
+  filter: drop-shadow(0 0 4px var(--color-accent)) drop-shadow(0 0 16px var(--color-accent));
+  animation: neon var(--fase, 3s) linear both;
+}
+
+/* Glitch: el logo tiembla y se desdobla en copias de color desplazadas */
+@keyframes glitch {
+  0%,
+  100% {
+    translate: 0;
+    filter: none;
+  }
+  20% {
+    translate: -5px 2px;
+    filter: drop-shadow(-6px 0 #e8402a) drop-shadow(6px 0 #ffffff);
+  }
+  40% {
+    translate: 4px -3px;
+    filter: drop-shadow(8px 0 #e8402a) drop-shadow(-4px 0 #2a5bd7);
+  }
+  60% {
+    translate: 0;
+    filter: none;
+  }
+  80% {
+    translate: 3px 1px;
+    filter: drop-shadow(-3px 0 #ffffff) drop-shadow(5px 0 #e8402a);
+  }
+}
+
+html[data-anim="glitch"] header a[href="/"] svg {
+  animation: glitch 0.5s steps(1) infinite;
+}
+
+/* Dibujo: el logo se vacía y su contorno se traza como a rotulador hasta rellenarse.
+   Las letras se dibujan todas a la vez: el trazo empieza de nuevo en cada contorno. */
+@keyframes dibujo {
+  0% {
+    fill-opacity: 0;
+    stroke-dashoffset: 1600;
+  }
+  75% {
+    fill-opacity: 0;
+    stroke-dashoffset: 0;
+  }
+  100% {
+    fill-opacity: 1;
+    stroke-dashoffset: 0;
+  }
+}
+
+html[data-anim="dibujo"] header a[href="/"] svg > :is(g, path) {
+  stroke: currentColor;
+  stroke-width: 5;
+  stroke-dasharray: 1600;
+  animation: dibujo var(--fase, 3s) ease-in-out both;
+}
+
+/* Y todo lo demás funde a negro: la barra de arriba, el hero, el reproductor y el menú se
+   apagan y solo queda el logo bailando. Al acabar la cortinilla vuelven con el mismo fundido. */
+.ticker,
+.hero > *,
+#radio,
+header > :not(a[href="/"]) {
+  transition: opacity 0.8s ease;
+}
+
+html[data-cortinilla] :is(.ticker, .hero > *, #radio, header > :not(a[href="/"])) {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* El logo viaja al centro de la pantalla y crece mientras suena, y al acabar vuelve a su
+   sitio. RadioPlayer mide el recorrido (--logo-dx, --logo-dy) justo antes de empezar. */
+header a[href="/"] {
+  position: relative;
+  z-index: 20;
+  transition: transform 0.8s ease-in-out;
+}
+
+html[data-cortinilla] header a[href="/"] {
+  transform: translate(var(--logo-dx, 0), var(--logo-dy, 0)) scale(1.8);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .marquee {
+    animation: none;
+  }
+
+  html[data-anim] header a[href="/"] :is(svg, svg > g, svg > path),
+  html[data-anim] header a[href="/"]::before,
+  html[data-anim] header a[href="/"]::after {
+    animation: none;
+    filter: none;
+  }
+
+  header a[href="/"] {
+    transition: none;
+  }
+
+  /* Quietos, cada uno en el centro de su camino */
+  .mensaje {
     animation: none;
   }
 }

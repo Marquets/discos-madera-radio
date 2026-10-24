@@ -72,7 +72,6 @@ export function TapeDeck({ tracks }: { tracks: DeckTrack[] }) {
         {[-2, -1, 0, 1, 2].map((i) => (
           <line key={i} x1={HEAD_X + i * 18} x2={HEAD_X + i * 18} y1="88" y2={i === 0 ? "106" : "100"} stroke={i === 0 ? CREAM : WIRE} strokeWidth="3" />
         ))}
-        <path d="M352 145 l18 -12 v24 z M372 145 l18 -12 v24 z" fill={CREAM} transform="rotate(180 371 145)" />
 
         <Reel cx={200} tape={left} angle={spin / left} />
         <Reel cx={540} tape={right} angle={spin / right} />

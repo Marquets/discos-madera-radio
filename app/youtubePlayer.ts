@@ -7,6 +7,9 @@ type YTPlayer = {
   getPlayerState(): number;
   getCurrentTime(): number;
   getDuration(): number;
+  setVolume(volume: number): void;
+  mute(): void;
+  unMute(): void;
   destroy(): void;
 };
 
@@ -36,6 +39,10 @@ function loadYoutubeApi() {
 export async function createYoutubePlayer(el: HTMLElement, on: { ready(): void; progress(p: Progress): void }): Promise<Player> {
   await loadYoutubeApi();
   let poll: ReturnType<typeof setInterval> | undefined;
+  // The player only takes a volume or mute once ready, so hold on to them until then
+  let volume: number | null = null;
+  let muted = false;
+  let ready = false;
 
   const report = () =>
     on.progress({
@@ -52,6 +59,9 @@ export async function createYoutubePlayer(el: HTMLElement, on: { ready(): void; 
     playerVars: { playsinline: 1 },
     events: {
       onReady() {
+        ready = true;
+        if (volume !== null) player.setVolume(volume);
+        if (muted) player.mute();
         // This API has no progress event like Spotify's playback_update, so poll for one
         poll = setInterval(report, 1000);
         on.ready();
@@ -67,6 +77,16 @@ export async function createYoutubePlayer(el: HTMLElement, on: { ready(): void; 
       else player.stopVideo();
     },
     play: () => player.playVideo(),
+    setVolume(v: number) {
+      volume = v;
+      if (ready) player.setVolume(v);
+    },
+    setMuted(m: boolean) {
+      muted = m;
+      if (!ready) return;
+      if (m) player.mute();
+      else player.unMute();
+    },
     destroy() {
       clearInterval(poll);
       player.destroy();

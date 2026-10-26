@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 const LINKS = [
   { href: "/archivo", label: "Archivo" },
   { href: "/programas", label: "Programas" },
+  { href: "/live", label: "Live" },
   // Deja tu píxel queda fuera del menú; la página sigue en pie y se llega por su URL
 ];
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { JINGLE_EVERY, JINGLES } from "@/lib/jingles";
 import { nowPlaying } from "@/lib/schedule";
@@ -86,6 +87,8 @@ export function RadioPlayer({ tracks, thanks }: { tracks: RadioTrack[]; thanks: 
   // Separate from `current`: the browser may refuse to play what we just loaded
   const [playing, setPlaying] = useState(false);
   const [videoTitle, setVideoTitle] = useState<string>();
+  // /live plays its own sets, and two things sounding at once would be noise
+  const live = usePathname() === "/live";
 
   // Held in a ref so the ▶ button can reach the scheduler that lives inside the effect
   const tuneIn = useRef<() => void>(() => {});
@@ -117,7 +120,7 @@ export function RadioPlayer({ tracks, thanks }: { tracks: RadioTrack[]; thanks: 
   // button is instant when it can't: browsers only grant autoplay to origins the
   // visitor has already interacted with, so a first-timer still has to press play.
   useEffect(() => {
-    if (!tracks.length) return;
+    if (!tracks.length || live) return;
     let cancelled = false;
 
     const jingle = new Audio();
@@ -331,17 +334,21 @@ export function RadioPlayer({ tracks, thanks }: { tracks: RadioTrack[]; thanks: 
       jingle.pause();
       showJingle(false);
       controller.current?.destroy();
+      setPlaying(false);
+      setCurrent(null);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- tracksKey stands for tracks, see above
-  }, [tracksKey, choice]);
+  }, [tracksKey, choice, live]);
 
   const track = current === null ? null : tracks[current];
   const gracias = thanks.length ? ` · Gracias a ${thanks.join(", ")}` : "";
-  const ticker = !tracks.length
-    ? "Todavía no suena nada · Añade la primera canción a la playlist"
-    : playing && track
-      ? `Ahora suena: ${(source === "youtube" && videoTitle) || `${track.title} — ${track.artist}`}${source === "spotify" ? " · ¿Solo oyes 30 segundos? Inicia sesión en open.spotify.com" : ""}${gracias}`
-      : `Discos Madera Radio · ${tracks.length} canciones en antena · Pulsa ▶ para sintonizar, o dale al play del reproductor${gracias}`;
+  const ticker = live
+    ? "Live · Directos del colectivo Discos Madera"
+    : !tracks.length
+      ? "Todavía no suena nada · Añade la primera canción a la playlist"
+      : playing && track
+        ? `Ahora suena: ${(source === "youtube" && videoTitle) || `${track.title} — ${track.artist}`}${source === "spotify" ? " · ¿Solo oyes 30 segundos? Inicia sesión en open.spotify.com" : ""}${gracias}`
+        : `Discos Madera Radio · ${tracks.length} canciones en antena · Pulsa ▶ para sintonizar, o dale al play del reproductor${gracias}`;
 
   return (
     <>
@@ -362,7 +369,7 @@ export function RadioPlayer({ tracks, thanks }: { tracks: RadioTrack[]; thanks: 
             ))}
           </div>
         </div>
-        {tracks.some((t) => t.youtubeId) && (
+        {!live && tracks.some((t) => t.youtubeId) && (
           <div role="group" aria-label="Escuchar con" className="flex gap-1 pl-4 text-xs">
             {(["spotify", "youtube"] as const).map((s) => (
               <button
@@ -383,7 +390,7 @@ export function RadioPlayer({ tracks, thanks }: { tracks: RadioTrack[]; thanks: 
           </div>
         )}
         {/* Spotify's embed can't be turned down from outside, so only YouTube gets a slider */}
-        {source === "youtube" && (
+        {!live && source === "youtube" && (
           <label className="flex items-center gap-2 pl-4 text-xs">
             <span aria-hidden>Vol</span>
             <input
@@ -405,7 +412,7 @@ export function RadioPlayer({ tracks, thanks }: { tracks: RadioTrack[]; thanks: 
             </svg>
           </button>
         )}
-        {tracks.length > 0 && !playing && (
+        {!live && tracks.length > 0 && !playing && (
           <button onClick={() => tuneIn.current()} aria-label="Sintonizar la radio" className="py-2 pl-4 pr-6 text-lg leading-none hover:text-white">
             ▶
           </button>

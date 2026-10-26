@@ -18,7 +18,7 @@ export default async function Home() {
         // One full screen minus what sits above it, so the covers start just off the
         // fold and scrolling is what reveals them. svh, not vh, because a phone's
         // address bar shrinks the viewport and vh would overshoot behind it.
-        <div className="hero relative flex min-h-[calc(100svh-var(--chrome))] flex-col bg-black px-4 pb-12 text-accent sm:px-8">
+        <div className="hero relative flex min-h-[calc(100svh-var(--chrome))] flex-col bg-black max-sm:justify-center px-4 pb-12 text-accent sm:px-8">
           <TapeDeck tracks={onAir} />
           {/* Hueco del reproductor de Spotify, que globals.css coloca encima: dice lo
               mismo que decía el pie "now playing", así que hace de pie además de
@@ -27,7 +27,7 @@ export default async function Home() {
           <Mensajes maxLength={MAX_LENGTH} />
         </div>
       )}
-      <div className="px-4 pt-12 sm:px-8">
+      <div className="px-4 pt-12 pb-16 sm:px-8">
         {latest.length ? <TrackGrid tracks={latest} /> : <p className="text-center uppercase">Aún no hay canciones.</p>}
       </div>
     </>

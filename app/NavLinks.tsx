@@ -33,17 +33,19 @@ export function NavLinks() {
 
   return (
     <nav ref={nav} className="relative">
-      <button onClick={() => setOpen(!open)} aria-expanded={open} aria-controls="menu" aria-label="Menú" className="flex h-[1em] items-center hover:text-white">
+      <button onClick={() => setOpen(!open)} aria-expanded={open} aria-controls="menu" aria-label="Menú" className="relative z-30 -m-3 box-content flex h-[1em] items-center p-3 hover:text-white">
         <span className="relative h-3 w-6" aria-hidden>
           <span className={`absolute left-0 h-0.5 w-6 bg-current transition-[top,rotate] duration-300 motion-reduce:transition-none ${open ? "top-1.25 rotate-45" : "top-0"}`} />
           <span className={`absolute top-1.25 left-0 h-0.5 w-6 bg-current transition-opacity duration-300 motion-reduce:transition-none ${open ? "opacity-0" : "opacity-100"}`} />
           <span className={`absolute left-0 h-0.5 w-6 bg-current transition-[top,rotate] duration-300 motion-reduce:transition-none ${open ? "top-1.25 -rotate-45" : "top-2.5"}`} />
         </span>
       </button>
+      {/* A dropdown on wider screens; on a phone it takes the whole screen, links centred */}
       <ul
         id="menu"
         inert={!open}
-        className={`absolute top-full left-0 z-20 flex flex-col items-start gap-3 bg-black pt-4 pr-8 pb-4 transition-opacity duration-300 motion-reduce:transition-none ${open ? "opacity-100" : "opacity-0"}`}
+        onClick={(e) => e.target === e.currentTarget && setOpen(false)}
+        className={`absolute top-full left-0 z-20 flex flex-col items-start gap-3 bg-black pt-4 pr-8 pb-4 transition-opacity duration-300 motion-reduce:transition-none max-sm:fixed max-sm:inset-0 max-sm:items-center max-sm:justify-center max-sm:gap-6 max-sm:p-0 ${open ? "opacity-100" : "pointer-events-none opacity-0"}`}
       >
         {LINKS.map(({ href, label }, i) => (
           <li
@@ -56,7 +58,7 @@ export function NavLinks() {
               href={href}
               onClick={() => setOpen(false)}
               aria-current={pathname === href ? "page" : undefined}
-              className="text-3xl decoration-4 underline-offset-4 hover:underline aria-[current=page]:underline sm:text-4xl"
+              className="text-5xl decoration-4 underline-offset-4 hover:underline aria-[current=page]:underline sm:text-4xl"
             >
               {label}
             </Link>

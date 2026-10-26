@@ -81,6 +81,8 @@ export function RadioPlayer({ tracks, thanks }: { tracks: RadioTrack[]; thanks: 
   const [source, setSource] = useState<"spotify" | "youtube">("spotify");
   // Bumped by the Spotify/YouTube switch, so the player is rebuilt with the new choice
   const [choice, setChoice] = useState(0);
+  // On a phone the player docks at the bottom of every page but the front one, and folds away
+  const [folded, setFolded] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const progress = useRef<Progress>(null);
   const [current, setCurrent] = useState<number | null>(null);
@@ -293,13 +295,14 @@ export function RadioPlayer({ tracks, thanks }: { tracks: RadioTrack[]; thanks: 
     (async () => {
       // Spotify has no ads, but its embed needs the visitor signed in to open.spotify.com in
       // that browser, which on a phone nobody is, and it can't start the next song in a hidden
-      // tab. YouTube plays for anyone and carries on hidden, with the odd ad. So YouTube is the
-      // default on phones, Spotify elsewhere, and the switch in the ticker overrides either.
+      // tab. YouTube plays for anyone and carries on hidden, with the odd ad. So phones (a touch
+      // screen, or one as narrow as the mobile layout) always play YouTube; elsewhere Spotify
+      // is the default and the switch in the ticker can change it.
       let stored: string | null = null;
       try {
         stored = localStorage.getItem(SOURCE_KEY);
       } catch {}
-      const youtube = tracks.some((t) => t.youtubeId) && (stored ? stored === "youtube" : matchMedia("(pointer: coarse)").matches);
+      const youtube = tracks.some((t) => t.youtubeId) && (matchMedia("(pointer: coarse), (max-width: 639px)").matches || stored === "youtube");
       // Both players replace the target node with their iframe, so give them one React doesn't own
       const target = document.createElement("div");
       // Always here, never in the page: moving an iframe reloads it and cuts the music,
@@ -369,8 +372,9 @@ export function RadioPlayer({ tracks, thanks }: { tracks: RadioTrack[]; thanks: 
             ))}
           </div>
         </div>
+        {/* Phones always play YouTube, so they get no switch */}
         {!live && tracks.some((t) => t.youtubeId) && (
-          <div role="group" aria-label="Escuchar con" className="flex gap-1 pl-4 text-xs">
+          <div role="group" aria-label="Escuchar con" className="flex gap-1 pl-4 text-xs pointer-coarse:hidden max-sm:hidden">
             {(["spotify", "youtube"] as const).map((s) => (
               <button
                 key={s}
@@ -391,7 +395,8 @@ export function RadioPlayer({ tracks, thanks }: { tracks: RadioTrack[]; thanks: 
         )}
         {/* Spotify's embed can't be turned down from outside, so only YouTube gets a slider */}
         {!live && source === "youtube" && (
-          <label className="flex items-center gap-2 pl-4 text-xs">
+          // A phone has its own volume buttons, and the ticker needs the room
+          <label className="hidden items-center gap-2 pl-4 text-xs sm:flex">
             <span aria-hidden>Vol</span>
             <input
               type="range"
@@ -427,12 +432,18 @@ export function RadioPlayer({ tracks, thanks }: { tracks: RadioTrack[]; thanks: 
         ref={container}
         id="radio"
         data-source={source}
+        data-on={current !== null || undefined}
+        data-folded={folded || undefined}
         // Visible as soon as a track is loaded, never gated on `playing`: on iOS and Android
         // the gesture has to happen inside Spotify's own iframe, so hiding it until playback
         // is confirmed leaves a phone with no way to ever start the radio.
         // YouTube needs a video-shaped box; Spotify's iframe sets its own 80px height
         className={`fixed right-4 bottom-4 z-10 w-[min(360px,calc(100%-2rem))] overflow-hidden rounded-xl shadow-xl empty:hidden ${source === "youtube" ? "aspect-video" : ""} ${current === null ? "invisible" : ""}`}
       />
+      {/* Only shown by globals.css, on a phone and away from the front page */}
+      <button onClick={() => setFolded(!folded)} aria-expanded={!folded} aria-controls="radio" className="radio-toggle fixed right-3 z-10 hidden items-center rounded-t-md bg-black px-3 py-1.5 font-mono text-xs uppercase text-accent">
+        {folded ? "▴ Reproductor" : "▾ Ocultar"}
+      </button>
     </>
   );
 }

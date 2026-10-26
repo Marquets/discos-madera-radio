@@ -9,12 +9,12 @@
 
 /* Alto del deslizante más la cabecera, que van encima del hero dentro de la banda
    negra. El hero lo resta del alto de pantalla para acabar justo a una pantalla.
-   Medido sobre la cabecera ya renderizada: en móvil es más alta porque el logo se
-   va a su propia fila, y en pantalla grande se le suma el margen del logo
+   Medido sobre la cabecera ya renderizada: en móvil va todo en una fila con el logo
+   más pequeño, y en pantalla grande se le suma el margen del logo
    (--logo-drop, abajo). Si cambia el relleno o el tamaño del logo, hay que volver a
    medirlo. */
 :root {
-  --chrome: 11.75rem;
+  --chrome: 9.5rem;
 }
 
 /* Margen con el que el logo baja hasta el magnetófono. Centra en la pantalla el
@@ -56,7 +56,7 @@ body:has(:not([style*="display: none"]) > #live) header a[href^="https://open.sp
    todo lo que cabe en la pantalla. */
 body:has(:not([style*="display: none"]) > #live) {
   background: black;
-  --chrome: 11.75rem;
+  --chrome: 9.5rem;
 
   @media (min-width: 640px) {
     --chrome: 11.25rem;
@@ -80,6 +80,46 @@ body:has(:not([style*="display: none"]) > #live) {
     bottom: auto;
     width: anchor-size(width);
     box-shadow: none;
+  }
+}
+
+/* En el móvil, fuera de la portada, el reproductor flotante tapaba lo que hubiera debajo:
+   se pega abajo a todo el ancho, se puede plegar fuera de la pantalla (sigue sonando) y la
+   página deja sitio debajo para que no tape lo último. --radio-h es lo que ocupa. */
+@media (max-width: 639px) {
+  body:not(:has(:not([style*="display: none"]) > #reproductor)):has(#radio[data-on]) {
+    --radio-h: 80px;
+
+    &:has(#radio[data-source="youtube"]) {
+      --radio-h: 56.25vw;
+    }
+
+    &:has(#radio[data-folded]) {
+      --radio-h: 0px;
+    }
+
+    main {
+      padding-bottom: calc(var(--radio-h) + 2.5rem);
+    }
+
+    #radio {
+      left: 0;
+      right: 0;
+      bottom: 0;
+      width: 100%;
+      border-radius: 0;
+      transition: translate 0.3s ease;
+    }
+
+    #radio[data-folded] {
+      translate: 0 100%;
+    }
+
+    .radio-toggle {
+      display: flex;
+      bottom: var(--radio-h);
+      transition: bottom 0.3s ease;
+    }
   }
 }
 
@@ -338,6 +378,11 @@ html[data-cortinilla] header a[href="/"] {
 @media (prefers-reduced-motion: reduce) {
   .marquee {
     animation: none;
+  }
+
+  #radio,
+  .radio-toggle {
+    transition: none !important;
   }
 
   html[data-anim] header a[href="/"] :is(svg, svg > g, svg > path),

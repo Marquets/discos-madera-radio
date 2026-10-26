@@ -33,20 +33,20 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <Suspense fallback={<div className="h-9 bg-black" />}>
             <OnAir />
           </Suspense>
-          <header className="grid grid-cols-2 items-start gap-4 px-4 pb-6 pt-4 font-display text-xl uppercase leading-none sm:grid-cols-[1fr_auto_1fr] sm:px-8 sm:text-2xl">
+          <header className="grid grid-cols-[1fr_auto_1fr] items-center gap-4 px-4 pb-6 pt-4 font-display text-xl uppercase leading-none sm:items-start sm:px-8 sm:text-2xl">
             {/* Equal 1fr side columns keep the logo centred however wide the sides grow.
-                Three columns are too tight on a phone, so there it takes its own row. */}
+                On a phone the sides shrink to an icon each, so it all fits in one row. */}
             <NavLinks />
-            <Link href="/" className="order-first col-span-2 flex flex-col items-center gap-1 sm:order-none sm:col-span-1">
+            <Link href="/" className="flex flex-col items-center gap-1">
               <Logo className="h-14 w-auto sm:h-20" />
               <span className="font-mono text-xs tracking-[0.5em] sm:text-sm">Radio</span>
             </Link>
-            <a href={playlistUrl()} target="_blank" rel="noreferrer" className="justify-self-end text-right hover:underline">
-              Ir a la playlist ↗
+            <a href={playlistUrl()} target="_blank" rel="noreferrer" className="-m-3 justify-self-end p-3 text-right text-2xl hover:underline sm:m-0 sm:p-0">
+              <span className="max-sm:sr-only">Ir a la playlist </span>↗
             </a>
           </header>
         </div>
-        <main className="pb-16">{children}</main>
+        <main>{children}</main>
       </body>
     </html>
   );

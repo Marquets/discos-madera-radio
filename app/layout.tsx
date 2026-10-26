@@ -38,7 +38,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
                 Three columns are too tight on a phone, so there it takes its own row. */}
             <NavLinks />
             <Link href="/" className="order-first col-span-2 flex flex-col items-center gap-1 sm:order-none sm:col-span-1">
-              <Logo className="h-10 w-auto sm:h-14" />
+              <Logo className="h-14 w-auto sm:h-20" />
               <span className="font-mono text-xs tracking-[0.5em] sm:text-sm">Radio</span>
             </Link>
             <a href={playlistUrl()} target="_blank" rel="noreferrer" className="justify-self-end text-right hover:underline">

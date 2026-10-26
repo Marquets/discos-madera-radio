@@ -14,18 +14,18 @@
    (--logo-drop, abajo). Si cambia el relleno o el tamaño del logo, hay que volver a
    medirlo. */
 :root {
-  --chrome: 10.75rem;
+  --chrome: 11.75rem;
 }
 
 /* Margen con el que el logo baja hasta el magnetófono. Centra en la pantalla el
-   conjunto de logo, magnetófono y reproductor, que mide unas 33rem: la mitad más los
-   3.25rem que hay sobre el logo sin margen dan los 19.75rem. Medido con el
+   conjunto de logo, magnetófono y reproductor, que mide unas 34.5rem: la mitad más los
+   3.25rem que hay sobre el logo sin margen dan los 20.5rem. Medido con el
    magnetófono a su ancho máximo; en ventanas estrechas el conjunto es más bajo y
    queda un poco alto. Programas mide casi lo mismo con el tocadiscos y Coming soon. */
 @media (min-width: 640px) {
   :root {
-    --logo-drop: max(1rem, 50svh - 19.75rem);
-    --chrome: calc(9.75rem + var(--logo-drop));
+    --logo-drop: max(1rem, 50svh - 20.5rem);
+    --chrome: calc(11.25rem + var(--logo-drop));
   }
 }
 
@@ -86,8 +86,8 @@ body:has(#radio[data-source="youtube"]) #reproductor {
    ya quedó resuelto con el margen de antes. */
 @media (min-width: 640px) {
   body:has(#radio[data-source="youtube"]) {
-    --logo-drop: max(1rem, 50svh - 25.125rem);
-    --chrome: calc(9.75rem + var(--logo-drop));
+    --logo-drop: max(1rem, 50svh - 25.875rem);
+    --chrome: calc(11.25rem + var(--logo-drop));
   }
 }
 

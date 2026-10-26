@@ -33,12 +33,12 @@ export function NavLinks() {
 
   return (
     <nav ref={nav} className="relative">
-      <button onClick={() => setOpen(!open)} aria-expanded={open} aria-controls="menu" className="flex items-center gap-3 uppercase hover:text-white">
+      <button onClick={() => setOpen(!open)} aria-expanded={open} aria-controls="menu" aria-label="Menú" className="flex h-[1em] items-center hover:text-white">
         <span className="relative h-3 w-6" aria-hidden>
-          <span className={`absolute left-0 h-0.5 w-6 bg-current transition-transform duration-300 motion-reduce:transition-none ${open ? "top-1.25 rotate-45" : "top-0"}`} />
-          <span className={`absolute left-0 h-0.5 w-6 bg-current transition-transform duration-300 motion-reduce:transition-none ${open ? "top-1.25 -rotate-45" : "top-2.5"}`} />
+          <span className={`absolute left-0 h-0.5 w-6 bg-current transition-[top,rotate] duration-300 motion-reduce:transition-none ${open ? "top-1.25 rotate-45" : "top-0"}`} />
+          <span className={`absolute top-1.25 left-0 h-0.5 w-6 bg-current transition-opacity duration-300 motion-reduce:transition-none ${open ? "opacity-0" : "opacity-100"}`} />
+          <span className={`absolute left-0 h-0.5 w-6 bg-current transition-[top,rotate] duration-300 motion-reduce:transition-none ${open ? "top-1.25 -rotate-45" : "top-2.5"}`} />
         </span>
-        Menú
       </button>
       <ul
         id="menu"

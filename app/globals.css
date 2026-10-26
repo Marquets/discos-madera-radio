@@ -45,6 +45,12 @@
   }
 }
 
+/* Live no tiene nada que ver con la playlist de Spotify, así que su enlace se esconde ahí.
+   visibility y no display, para que el menú y el logo no cambien de sitio. */
+body:has(:not([style*="display: none"]) > #live) header a[href^="https://open.spotify.com"] {
+  visibility: hidden;
+}
+
 /* El reproductor de Spotify vive en la plantilla y flota en la esquina, así sigue
    sonando y a la vista al cambiar de página. En la portada se coloca sobre su hueco
    bajo el magnetófono. Sin anchor positioning se queda en la esquina también ahí. */

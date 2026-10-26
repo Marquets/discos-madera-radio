@@ -15,8 +15,8 @@ export type RadioTrack = {
   durationSec: number;
 };
 
-// position and duration in ms
-export type Progress = { isPaused: boolean; position: number; duration: number };
+// position and duration in ms; title only from YouTube, the video's own
+export type Progress = { isPaused: boolean; position: number; duration: number; title?: string };
 
 // setVolume takes 0–100. Spotify's embed has no volume or mute, so its player leaves both out.
 export type Player = {
@@ -85,6 +85,7 @@ export function RadioPlayer({ tracks, thanks }: { tracks: RadioTrack[]; thanks: 
   const [current, setCurrent] = useState<number | null>(null);
   // Separate from `current`: the browser may refuse to play what we just loaded
   const [playing, setPlaying] = useState(false);
+  const [videoTitle, setVideoTitle] = useState<string>();
 
   // Held in a ref so the ▶ button can reach the scheduler that lives inside the effect
   const tuneIn = useRef<() => void>(() => {});
@@ -277,6 +278,7 @@ export function RadioPlayer({ tracks, thanks }: { tracks: RadioTrack[]; thanks: 
       const prev = progress.current;
       progress.current = p;
       setPlaying(!p.isPaused);
+      setVideoTitle(p.title);
       // Move on the moment the player says the song ended. Its messages arrive even in a
       // background tab, where Chrome slows timers down so much that the next song never came.
       // Spotify reports the end as paused at 0, YouTube as paused at the full length. Previews
@@ -338,7 +340,7 @@ export function RadioPlayer({ tracks, thanks }: { tracks: RadioTrack[]; thanks: 
   const ticker = !tracks.length
     ? "Todavía no suena nada · Añade la primera canción a la playlist"
     : playing && track
-      ? `Ahora suena: ${track.title} — ${track.artist}${source === "spotify" ? " · ¿Solo oyes 30 segundos? Inicia sesión en open.spotify.com" : ""}${gracias}`
+      ? `Ahora suena: ${(source === "youtube" && videoTitle) || `${track.title} — ${track.artist}`}${source === "spotify" ? " · ¿Solo oyes 30 segundos? Inicia sesión en open.spotify.com" : ""}${gracias}`
       : `Discos Madera Radio · ${tracks.length} canciones en antena · Pulsa ▶ para sintonizar, o dale al play del reproductor${gracias}`;
 
   return (

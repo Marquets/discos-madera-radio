@@ -7,6 +7,8 @@ type YTPlayer = {
   getPlayerState(): number;
   getCurrentTime(): number;
   getDuration(): number;
+  // Not in the documented API, but it's what the player shows on its own title bar
+  getVideoData(): { video_id: string; title: string };
   setVolume(volume: number): void;
   mute(): void;
   unMute(): void;
@@ -43,6 +45,7 @@ export async function createYoutubePlayer(el: HTMLElement, on: { ready(): void; 
   let volume: number | null = null;
   let muted = false;
   let ready = false;
+  let videoId: string | null | undefined;
 
   const report = () =>
     on.progress({
@@ -50,6 +53,8 @@ export async function createYoutubePlayer(el: HTMLElement, on: { ready(): void; 
       isPaused: ![PLAYING, BUFFERING].includes(player.getPlayerState()),
       position: player.getCurrentTime() * 1000,
       duration: player.getDuration() * 1000,
+      // Right after a song change the player still describes the previous video
+      title: videoId && player.getVideoData().video_id === videoId ? player.getVideoData().title : undefined,
     });
 
   const player = new window.YT!.Player(el, {
@@ -72,6 +77,7 @@ export async function createYoutubePlayer(el: HTMLElement, on: { ready(): void; 
 
   return {
     load(track: RadioTrack, startAt: number) {
+      videoId = track.youtubeId;
       // A song YouTube had no match for plays as silence until the clock moves on
       if (track.youtubeId) player.loadVideoById({ videoId: track.youtubeId, startSeconds: startAt });
       else player.stopVideo();

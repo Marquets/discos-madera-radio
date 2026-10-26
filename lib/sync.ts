@@ -9,16 +9,18 @@ const STALE_MS = 60 * 1000;
 
 const isStale = (lastSyncAt?: string) => !lastSyncAt || Date.now() - Date.parse(lastSyncAt) > STALE_MS;
 
-/**
- * Adds new playlist songs and never removes old ones, so the playlist can be trimmed
- * below Spotify's 100-song embed limit without losing the radio's history.
- */
+/** Mirrors the playlist: new songs are added and songs taken off it stop playing. */
 export async function syncPlaylist() {
   const fresh = await playlistTracks();
   const now = new Date().toISOString();
   let added = 0;
 
   const db = await updateDb((db) => {
+    // An empty list is more likely an embed glitch than an emptied playlist, and would wipe every stored video
+    if (fresh.length) {
+      const current = new Set(fresh.map((t) => t.id));
+      db.tracks = db.tracks.filter((t) => current.has(t.id));
+    }
     const known = new Set(db.tracks.map((t) => t.id));
     for (const t of fresh) {
       if (known.has(t.id)) continue;

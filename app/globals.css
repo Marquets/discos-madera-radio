@@ -51,6 +51,18 @@ body:has(:not([style*="display: none"]) > #live) header a[href^="https://open.sp
   visibility: hidden;
 }
 
+/* Y es negra hasta abajo: sin esto asoma el naranja del fondo bajo el vídeo. El logo no
+   baja ahí, así que --chrome es solo el deslizante y la cabecera, para que el vídeo crezca
+   todo lo que cabe en la pantalla. */
+body:has(:not([style*="display: none"]) > #live) {
+  background: black;
+  --chrome: 11.75rem;
+
+  @media (min-width: 640px) {
+    --chrome: 11.25rem;
+  }
+}
+
 /* El reproductor de Spotify vive en la plantilla y flota en la esquina, así sigue
    sonando y a la vista al cambiar de página. En la portada se coloca sobre su hueco
    bajo el magnetófono. Sin anchor positioning se queda en la esquina también ahí. */

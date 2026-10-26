@@ -58,7 +58,8 @@ export function LivePlayer({ sets }: { sets: Live[] }) {
   }, [sets]);
 
   return (
-    <div className="mx-auto mt-6 w-full max-w-4xl">
+    // As wide as the page, but never taller than the screen left under the header and the title
+    <div className="mx-auto w-[min(100%,calc((100svh-var(--chrome)-7rem)*16/9))]">
       <div ref={box} className="aspect-video w-full overflow-hidden rounded-xl bg-white/5" />
       <p className="mt-4 text-center font-mono text-sm uppercase" aria-live="polite">
         {current === null ? "Sintonizando…" : sets[current].title}

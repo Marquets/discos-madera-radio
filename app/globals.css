@@ -5,6 +5,15 @@
   --font-display: var(--font-anton);
   --font-mono: var(--font-space-mono);
   --color-accent: #f89028;
+  /* Ambient's panel, after a hardware sequencer but in the site's warm colours: a near-black
+     ground, cream lines, the brand orange on the knobs, a hotter orange for the volume and the
+     wave keys, and the sky's blue for whatever is switched on */
+  --color-fondo: #14110e;
+  --color-panel: #1e1914;
+  --color-line: #ecdcc4;
+  --color-knob: #f89028;
+  --color-vivo: #ff5a36;
+  --color-activo: #8fd3f5;
   /* Wide enough for Ambient's knobs to fit either side of the logo */
   --breakpoint-hd: 90rem;
   /* And wide enough for them to grow there */
@@ -78,6 +87,13 @@ body:has(:not([style*="display: none"]) > #ambient) {
 
   .ticker {
     display: none;
+  }
+
+  /* Slate from top to bottom, the logo's band included */
+  background: var(--color-fondo);
+
+  div:has(> header) {
+    background: var(--color-fondo);
   }
 }
 

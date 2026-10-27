@@ -1,6 +1,6 @@
 // The Akai MPK mini's eight knobs send CC 70–77 out of the box; learning a knob overrides these
 export const DEFAULT_BINDINGS: Record<number, string> = {
-  70: "Volumen",
+  70: "Volume",
   71: "Pad",
   72: "Drone",
   73: "Lluvia",

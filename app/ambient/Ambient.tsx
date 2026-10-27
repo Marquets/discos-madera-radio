@@ -22,10 +22,10 @@ const REVERB: Reverb = { amount: 0.4, size: 5, color: 6000 };
 const MASTER = { volume: 0.8, light: 0.5, pitch: 0 };
 const SYNTH: Synth = { wave: "sine", attack: 0.01, decay: 3.5, cutoff: 6000, resonance: 1 };
 const WAVES: { wave: OscillatorType; label: string; symbol: string }[] = [
-  { wave: "sine", label: "Seno", symbol: "∿" },
-  { wave: "triangle", label: "Triángulo", symbol: "△" },
-  { wave: "sawtooth", label: "Sierra", symbol: "⩘" },
-  { wave: "square", label: "Cuadrada", symbol: "⊓" },
+  { wave: "sine", label: "Sine", symbol: "∿" },
+  { wave: "triangle", label: "Triangle", symbol: "△" },
+  { wave: "sawtooth", label: "Saw", symbol: "⩘" },
+  { wave: "square", label: "Square", symbol: "⊓" },
 ];
 // Only the picture: chaos is how much the arc writhes
 const VISUAL = { chaos: 1, saturation: 1 };
@@ -36,10 +36,6 @@ const FADE_MS = 700;
 // How long the controls stay up over the full-screen sky after the last move
 const BAR_MS = 3000;
 const MIDI_KEY = "ambient-midi";
-// The panel's wooden cheeks: grain over a walnut gradient
-const WOOD = {
-  backgroundImage: "repeating-linear-gradient(90deg, rgb(0 0 0 / 0.18) 0 1px, transparent 1px 5px), linear-gradient(#8a5a33, #5c3519 60%, #3d220f)",
-};
 // Empty, recording the first pass, playing it round, or playing it while recording on top
 type Looper = "empty" | "recording" | "playing" | "overdub";
 const LOOPER_LABELS: Record<Looper, string> = { empty: "", recording: "● Rec", playing: "⟳ Loop", overdub: "● Encima" };
@@ -405,7 +401,7 @@ export function Ambient() {
   // The main knobs: the mix and its sounds, then what colours them. Laid out beside the sky, and
   // again small along the bottom of it when it fills the screen
   const sounds: ComponentProps<typeof Knob>[] = [
-    { label: "Volumen", value: master.volume, min: 0, max: 1, initial: MASTER.volume, onChange: (volume) => setMaster((s) => ({ ...s, volume })), format: percent },
+    { label: "Volume", value: master.volume, min: 0, max: 1, initial: MASTER.volume, onChange: (volume) => setMaster((s) => ({ ...s, volume })), format: percent },
     ...CHANNELS.map(({ channel, label }) => ({
       label,
       value: levels[channel],
@@ -420,17 +416,18 @@ export function Ambient() {
     // Turned all the way down is darkness
     { label: "Luz", value: master.light, min: 0, max: 1, initial: MASTER.light, onChange: (light) => setMaster((s) => ({ ...s, light })), format: percent },
     { label: "Pitch", value: master.pitch, min: -12, max: 12, initial: MASTER.pitch, onChange: (pitch) => setMaster((s) => ({ ...s, pitch })), format: signed },
-    { label: "Eco", value: echo.amount, min: 0, max: 1, initial: ECHO.amount, onChange: (amount) => setEcho((s) => ({ ...s, amount })), format: percent },
+    { label: "Delay", value: echo.amount, min: 0, max: 1, initial: ECHO.amount, onChange: (amount) => setEcho((s) => ({ ...s, amount })), format: percent },
     { label: "Reverb", value: reverb.amount, min: 0, max: 1, initial: REVERB.amount, onChange: (amount) => setReverb((s) => ({ ...s, amount })), format: percent },
   ];
   const synthKnobs: ComponentProps<typeof Knob>[] = [
-    { label: "Ataque", value: synth.attack, min: 0.005, max: 2, initial: SYNTH.attack, onChange: (attack) => setSynth((s) => ({ ...s, attack })), format: seconds },
-    { label: "Caída", value: synth.decay, min: 0.3, max: 8, initial: SYNTH.decay, onChange: (decay) => setSynth((s) => ({ ...s, decay })), format: seconds },
-    { label: "Filtro", value: synth.cutoff, min: 200, max: 12000, initial: SYNTH.cutoff, onChange: (cutoff) => setSynth((s) => ({ ...s, cutoff })), format: kHz },
-    { label: "Resonancia", value: synth.resonance, min: 0.5, max: 15, initial: SYNTH.resonance, onChange: (resonance) => setSynth((s) => ({ ...s, resonance })), format: (v) => v.toFixed(1) },
+    { label: "Attack", value: synth.attack, min: 0.005, max: 2, initial: SYNTH.attack, onChange: (attack) => setSynth((s) => ({ ...s, attack })), format: seconds },
+    { label: "Decay", value: synth.decay, min: 0.3, max: 8, initial: SYNTH.decay, onChange: (decay) => setSynth((s) => ({ ...s, decay })), format: seconds },
+    { label: "Cutoff", value: synth.cutoff, min: 200, max: 12000, initial: SYNTH.cutoff, onChange: (cutoff) => setSynth((s) => ({ ...s, cutoff })), format: kHz },
+    { label: "Resonance", value: synth.resonance, min: 0.5, max: 15, initial: SYNTH.resonance, onChange: (resonance) => setSynth((s) => ({ ...s, resonance })), format: (v) => v.toFixed(1) },
   ];
   const waves = (
-    <div role="radiogroup" aria-label="Onda" className="flex flex-wrap justify-center gap-1">
+    // Rounded keys like a sequencer's pads, in the hot orange, the chosen one in the sky's blue
+    <div role="radiogroup" aria-label="Onda" className="grid grid-cols-2 gap-1">
       {WAVES.map(({ wave, label, symbol }) => (
         <button
           key={wave}
@@ -439,7 +436,7 @@ export function Ambient() {
           aria-label={label}
           title={label}
           onClick={() => setSynth((s) => ({ ...s, wave }))}
-          className="flex size-7 items-center justify-center border border-current text-base leading-none normal-case hover:opacity-80 aria-checked:bg-white aria-checked:text-black"
+          className="flex size-7 items-center justify-center rounded-md border border-vivo text-base leading-none text-vivo normal-case hover:opacity-80 aria-checked:border-activo aria-checked:text-activo hd:size-6 hd2:size-7"
         >
           {symbol}
         </button>
@@ -447,11 +444,11 @@ export function Ambient() {
     </div>
   );
   const extras: ComponentProps<typeof Knob>[] = [
-    { label: "Tiempo eco", value: echo.time, min: 0.05, max: 1.5, initial: ECHO.time, onChange: (time) => setEcho((s) => ({ ...s, time })), format: (v) => `${Math.round(v * 1000)}ms` },
-    { label: "Repeticiones", value: echo.repeats, min: 0, max: 0.9, initial: ECHO.repeats, onChange: (repeats) => setEcho((s) => ({ ...s, repeats })), format: percent },
-    { label: "Color eco", value: echo.color, min: 400, max: 8000, initial: ECHO.color, onChange: (color) => setEcho((s) => ({ ...s, color })), format: kHz },
-    { label: "Tamaño reverb", value: reverb.size, min: 1, max: 10, initial: REVERB.size, onChange: (size) => setReverb((s) => ({ ...s, size })), format: (v) => `${v.toFixed(1)}s` },
-    { label: "Color reverb", value: reverb.color, min: 400, max: 12000, initial: REVERB.color, onChange: (color) => setReverb((s) => ({ ...s, color })), format: kHz },
+    { label: "Delay time", value: echo.time, min: 0.05, max: 1.5, initial: ECHO.time, onChange: (time) => setEcho((s) => ({ ...s, time })), format: (v) => `${Math.round(v * 1000)}ms` },
+    { label: "Feedback", value: echo.repeats, min: 0, max: 0.9, initial: ECHO.repeats, onChange: (repeats) => setEcho((s) => ({ ...s, repeats })), format: percent },
+    { label: "Delay tone", value: echo.color, min: 400, max: 8000, initial: ECHO.color, onChange: (color) => setEcho((s) => ({ ...s, color })), format: kHz },
+    { label: "Size", value: reverb.size, min: 1, max: 10, initial: REVERB.size, onChange: (size) => setReverb((s) => ({ ...s, size })), format: (v) => `${v.toFixed(1)}s` },
+    { label: "Reverb tone", value: reverb.color, min: 400, max: 12000, initial: REVERB.color, onChange: (color) => setReverb((s) => ({ ...s, color })), format: kHz },
     { label: "Caos", value: visual.chaos, min: 0, max: 4, initial: VISUAL.chaos, onChange: (chaos) => setVisual((s) => ({ ...s, chaos })), format: (v) => v.toFixed(1) },
     { label: "Saturación", value: visual.saturation, min: 0, max: 1.5, initial: VISUAL.saturation, onChange: (saturation) => setVisual((s) => ({ ...s, saturation })), format: percent },
   ];
@@ -481,8 +478,8 @@ export function Ambient() {
   const tuning = (
     <>
       <label className="flex flex-col gap-1">
-        Tono
-        <select value={key} onChange={(e) => setKey(Number(e.target.value))} className="border border-current bg-black px-2 py-1 hd:px-1">
+        Key
+        <select value={key} onChange={(e) => setKey(Number(e.target.value))} className="rounded-md border border-line/30 bg-fondo px-2 py-1 hd:px-1">
           {KEYS.map((k, i) => (
             <option key={k} value={i}>
               {k}
@@ -491,8 +488,8 @@ export function Ambient() {
         </select>
       </label>
       <label className="flex flex-col gap-1">
-        Modo
-        <select value={mode} onChange={(e) => setMode(e.target.value)} className="border border-current bg-black px-2 py-1 hd:px-1">
+        Mode
+        <select value={mode} onChange={(e) => setMode(e.target.value)} className="rounded-md border border-line/30 bg-fondo px-2 py-1 hd:px-1">
           {Object.keys(MODES).map((m) => (
             <option key={m}>{m}</option>
           ))}
@@ -504,7 +501,7 @@ export function Ambient() {
     <button
       onClick={connectMidi}
       aria-pressed={learn !== false}
-      className="border border-current px-2 py-1 hover:text-white aria-pressed:bg-white aria-pressed:text-black"
+      className="rounded-md border-[1.5px] border-current px-2 py-1 hover:text-white aria-pressed:border-activo aria-pressed:bg-activo aria-pressed:text-fondo"
     >
       {midi !== "on" ? "Conectar MIDI" : learn === false ? "Asignar MIDI" : "Hecho"}
     </button>
@@ -535,7 +532,7 @@ export function Ambient() {
 
   return (
     // A panel after the Minimoog's over the sky: sections left to right in the order the sound
-    // flows, each with its big knobs and a row of fine ones, between wooden cheeks
+    // flows, each with its big knobs and a row of fine ones, in a rounded dark box
     <div className="flex w-full flex-col gap-4">
       {/* The sky's box: in its place, or fixed over everything when full screen */}
       <div
@@ -565,13 +562,12 @@ export function Ambient() {
           </div>
         )}
       </div>
-      {/* Over the sky the panel sits between wooden cheeks; from hd (globals.css) up it moves into the
+      {/* Over the sky the panel sits in a rounded dark box; from hd (globals.css) up it moves into the
           logo's band, measured like globals.css's --chrome, each section's fine knobs dropping below it */}
       <div className="order-first flex items-stretch overflow-hidden rounded-xl hd:absolute hd:inset-x-0 hd:-top-36 hd:h-36 hd:overflow-visible">
-        <span aria-hidden className="hidden w-5 shrink-0 sm:block hd:hidden" style={WOOD} />
-        <div className="flex flex-1 flex-wrap justify-center gap-x-5 gap-y-5 bg-black px-4 py-4 font-mono text-[10px] uppercase sm:border-y sm:border-accent/30 hd:grid hd:grid-cols-[1fr_20rem_1fr] hd:items-center hd:border-0 hd:bg-transparent hd:px-8 hd:py-0 hd:text-[9px] hd2:text-[10px]">
-          <div className="contents hd:col-start-1 hd:flex hd:justify-evenly hd:gap-3 hd:pl-12">
-            <Section title="Mezclador" className="order-3 hd:order-none">
+        <div className="flex flex-1 flex-wrap justify-center gap-x-2 gap-y-4 rounded-2xl border border-line/30 bg-panel px-3 py-4 font-mono text-[9px] uppercase hd:grid hd:grid-cols-[1fr_19rem_1fr] hd:items-center hd:gap-x-9 hd2:gap-x-28 hd:border-0 hd:bg-transparent hd:px-8 hd:py-0 hd:text-[9px] hd2:text-[10px]">
+          <div className="contents hd:col-start-1 hd:ml-12 hd:flex hd:justify-self-end hd:divide-x hd:divide-line/15 hd:rounded-2xl hd:border hd:border-line/30 hd:bg-panel">
+            <Section title="Mixer" className="order-3 hd:order-none">
               {CHANNELS.map(({ label }) => knob(label))}
               {knob("Pitch")}
             </Section>
@@ -580,33 +576,33 @@ export function Ambient() {
               <div className="grid w-40 grid-cols-2 gap-2 hd:w-20 hd:grid-cols-1 hd:gap-1 hd2:w-40 hd2:grid-cols-2 hd2:gap-2">{tuning}</div>
             </Section>
           </div>
-          <div className="contents hd:col-start-3 hd:flex hd:justify-evenly hd:gap-3">
-            <Section title="Oscilador" open={fold === "Oscilador"} onToggle={() => setFold(fold === "Oscilador" ? null : "Oscilador")} className="order-2 hd:order-none" fine={fine(["Ataque", "Caída"])}>
+          <div className="contents hd:col-start-3 hd:flex hd:justify-self-start hd:divide-x hd:divide-line/15 hd:rounded-2xl hd:border hd:border-line/30 hd:bg-panel">
+            <Section title="Oscillator" open={fold === "Oscillator"} onToggle={() => setFold(fold === "Oscillator" ? null : "Oscillator")} className="order-2 hd:order-none" fine={fine(["Attack", "Decay"])}>
               <div className="w-16 self-center">{waves}</div>
-              {knob("Filtro")}
-              {knob("Resonancia")}
+              {knob("Cutoff")}
+              {knob("Resonance")}
             </Section>
             <Section
-              title="Efectos"
-              open={fold === "Efectos"}
-              onToggle={() => setFold(fold === "Efectos" ? null : "Efectos")}
+              title="FX"
+              open={fold === "FX"}
+              onToggle={() => setFold(fold === "FX" ? null : "FX")}
               className="order-4 hd:order-none"
               fine={
                 <div className="flex flex-col items-center gap-2">
-                  <div className="flex gap-3">{fine(["Tiempo eco", "Repeticiones", "Color eco"])}</div>
-                  <div className="flex gap-3">{fine(["Tamaño reverb", "Color reverb"])}</div>
+                  <div className="flex gap-3">{fine(["Delay time", "Feedback", "Delay tone"])}</div>
+                  <div className="flex gap-3">{fine(["Size", "Reverb tone"])}</div>
                 </div>
               }
             >
-              {knob("Eco")}
+              {knob("Delay")}
               {knob("Reverb")}
             </Section>
             <Section title="Cielo" open={fold === "Cielo"} onToggle={() => setFold(fold === "Cielo" ? null : "Cielo")} className="order-5 hd:order-none" fine={fine(["Saturación"])}>
               {knob("Luz")}
               {knob("Caos")}
             </Section>
-            <Section title="Salida" open={fold === "Salida"} onToggle={() => setFold(fold === "Salida" ? null : "Salida")} className="order-6 hd:order-none" fine={midiControls}>
-              {knob("Volumen", "big")}
+            <Section title="Output" open={fold === "Output"} onToggle={() => setFold(fold === "Output" ? null : "Output")} className="order-6 hd:order-none" fine={midiControls}>
+              {knob("Volume", "big")}
               <div className="flex flex-col items-center gap-2 self-center">
                 <RoundButton label={on ? "Apagar" : "Encender"} path={POWER} pressed={on} onClick={toggle} />
                 <RoundButton bare label="Cómo funciona" path={INFO} onClick={() => info.current?.showModal()} />
@@ -614,38 +610,44 @@ export function Ambient() {
             </Section>
           </div>
         </div>
-        <span aria-hidden className="hidden w-5 shrink-0 sm:block hd:hidden" style={WOOD} />
       </div>
       {manual && (
         // Every control, small and white along the bottom of the asked-for full-screen sky, in the
         // panel's sections with their fine knobs out; wraps where it doesn't fit, hides while nothing moves
         <div
-          className={`fixed inset-x-0 bottom-0 z-[60] flex flex-wrap items-start justify-center gap-x-6 gap-y-3 bg-linear-to-t from-black/70 to-transparent px-4 pt-12 pb-4 font-mono text-[9px] text-white uppercase transition-opacity duration-700 motion-reduce:transition-none ${bar ? "" : "pointer-events-none opacity-0"}`}
+          className={`fixed inset-x-0 bottom-0 z-[60] flex flex-wrap items-start justify-center gap-x-6 gap-y-3 bg-linear-to-t from-fondo/95 via-fondo/75 to-transparent px-4 pt-14 pb-4 font-mono text-[9px] text-white uppercase transition-opacity duration-700 motion-reduce:transition-none ${bar ? "" : "pointer-events-none opacity-0"}`}
         >
           <Section title="Le Jazz" small>
             <div className="grid w-40 grid-cols-2 gap-2">{tuning}</div>
           </Section>
-          <Section title="Oscilador" small>
+          <Section title="Oscillator" small>
             <div className="w-16 self-center">{waves}</div>
-            {fine(["Filtro", "Resonancia", "Ataque", "Caída"])}
+            {fine(["Cutoff", "Resonance", "Attack", "Decay"])}
           </Section>
-          <Section title="Mezclador" small>
+          <Section title="Mixer" small>
             {fine([...CHANNELS.map(({ label }) => label), "Pitch"])}
           </Section>
-          <Section title="Efectos" small>
-            {fine(["Eco", "Reverb", "Tiempo eco", "Repeticiones", "Color eco", "Tamaño reverb", "Color reverb"])}
+          <Section title="FX" small>
+            {fine(["Delay", "Reverb", "Delay time", "Feedback", "Delay tone", "Size", "Reverb tone"])}
           </Section>
           <Section title="Cielo" small>
             {fine(["Luz", "Caos", "Saturación"])}
           </Section>
-          <Section title="Salida" small>
-            {knob("Volumen", "small")}
+          <Section title="Output" small>
+            {knob("Volume", "small")}
             <div className="flex flex-col items-center gap-2 self-center">
               <RoundButton label={on ? "Apagar" : "Encender"} path={POWER} pressed={on} onClick={toggle} />
               {midiButton}
-              <RoundButton bare label="Salir de pantalla completa" path={SHRINK} onClick={() => setView("normal")} />
             </div>
           </Section>
+        </div>
+      )}
+      {manual && (
+        // In the corner, where the expand icon sat, and showing and hiding with the bar
+        <div
+          className={`fixed top-3 right-3 z-[60] text-white drop-shadow transition-opacity duration-700 motion-reduce:transition-none ${bar ? "" : "pointer-events-none opacity-0"}`}
+        >
+          <RoundButton bare label="Salir de pantalla completa" path={SHRINK} onClick={() => setView("normal")} />
         </div>
       )}
       {/* A click on the backdrop closes it too; the padding lives inside, so a click there doesn't */}
@@ -653,7 +655,7 @@ export function Ambient() {
         ref={info}
         aria-labelledby="como-funciona"
         onClick={(e) => e.target === e.currentTarget && info.current?.close()}
-        className="m-auto max-w-md rounded-xl border border-accent/40 bg-black text-sm text-accent backdrop:bg-black/70"
+        className="m-auto max-w-md rounded-2xl border-[1.5px] border-line/50 bg-panel text-sm text-line backdrop:bg-black/70"
       >
         <div className="p-6">
           <h2 id="como-funciona" className="font-display text-3xl uppercase">
@@ -676,7 +678,7 @@ export function Ambient() {
               <strong>Azar</strong> es el volumen de las notas que caen solas; <strong>Tus notas</strong>, el de las que tocas tú.
             </li>
             <li>
-              <strong>Por MIDI</strong>, conecta un teclado o un controlador desde la sección Salida (en Chrome, Edge o Firefox). Los knobs de un Akai MPK mini funcionan sin configurar nada, y con Asignar MIDI enlazas cualquier mando a cualquier knob.
+              <strong>Por MIDI</strong>, conecta un teclado o un controlador desde la sección Output (en Chrome, Edge o Firefox). Los knobs de un Akai MPK mini funcionan sin configurar nada, y con Asignar MIDI enlazas cualquier mando a cualquier knob.
             </li>
             <li>
               <strong>Pantalla completa</strong> con el icono de la esquina. Si no tocas nada en un rato, el cielo se queda solo.
@@ -699,9 +701,9 @@ function RoundButton({ label, path, pressed, bare, onClick }: { label: string; p
       aria-pressed={pressed}
       aria-label={label}
       title={label}
-      className={`group flex size-8 shrink-0 items-center justify-center rounded-full hover:opacity-80 ${bare ? "" : "border-2 border-current aria-pressed:bg-current"}`}
+      className={`group flex size-8 shrink-0 items-center justify-center rounded-full hover:opacity-80 ${bare ? "" : "border-[1.5px] border-current aria-pressed:border-activo aria-pressed:bg-activo"}`}
     >
-      <svg viewBox="0 0 24 24" className={`group-aria-pressed:text-black ${bare ? "size-5" : "size-4"}`} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden>
+      <svg viewBox="0 0 24 24" className={`group-aria-pressed:text-fondo ${bare ? "size-5" : "size-4"}`} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden>
         <path d={path} />
       </svg>
     </button>
@@ -716,18 +718,21 @@ type SectionProps = { title: string; fine?: ReactNode; open?: boolean; onToggle?
 
 function Section({ title, fine, open, onToggle, small, className, children }: SectionProps) {
   return (
-    <section aria-label={title} className={`relative flex flex-col items-center border-t border-current/40 ${small ? "gap-2 pt-1" : "gap-3 pt-2 hd:gap-2 hd:pt-1"} ${className ?? ""}`}>
-      <h2 className={`flex items-center gap-1 font-display tracking-[0.2em] ${small ? "text-xs" : "text-base hd:text-xs hd2:text-sm"}`}>
+    // Its small bold title at the top left, as printed on a hardware panel; the panel draws the boxes
+    <section aria-label={title} className={`relative flex min-w-0 flex-col gap-2.5 ${small ? "" : "px-3 py-2 hd:px-1.5 hd:py-1.5 hd2:px-2.5"} ${className ?? ""}`}>
+      <h2 className="flex items-center gap-1 font-mono text-[10px] font-bold tracking-[0.15em] text-line/80">
         <span aria-hidden>{title}</span>
         {fine && (
-          <button onClick={onToggle} aria-expanded={open} aria-label={`Más controles de ${title}`} className="px-1 font-mono text-[10px] hover:text-white">
+          <button onClick={onToggle} aria-expanded={open} aria-label={`Más controles de ${title}`} className="px-1 text-vivo hover:text-white">
             {open ? "▾" : "▸"}
           </button>
         )}
       </h2>
-      <div className={`flex items-start justify-center ${small ? "gap-2" : "gap-4 hd:gap-2"}`}>{children}</div>
+      <div className={`flex items-start justify-center ${small ? "gap-3" : "gap-4 hd:gap-2.5 hd2:gap-3"}`}>{children}</div>
       {fine && open && (
-        <div className="flex items-start justify-center gap-3 hd:absolute hd:top-full hd:left-1/2 hd:z-20 hd:mt-2 hd:w-max hd:-translate-x-1/2 hd:rounded-lg hd:border hd:border-accent/40 hd:bg-black hd:p-3">{fine}</div>
+        <div className="flex items-start justify-center gap-4 pt-2 hd:absolute hd:top-full hd:left-1/2 hd:z-20 hd:mt-2 hd:w-max hd:-translate-x-1/2 hd:rounded-xl hd:border hd:border-line/30 hd:bg-panel hd:p-3 hd:pt-4">
+          {fine}
+        </div>
       )}
     </section>
   );

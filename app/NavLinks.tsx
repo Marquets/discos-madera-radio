@@ -9,6 +9,7 @@ const LINKS = [
   { href: "/archivo", label: "Archivo" },
   { href: "/programas", label: "Programas" },
   { href: "/live", label: "Live" },
+  { href: "/ambient", label: "Ambient" },
   // Deja tu píxel queda fuera del menú; la página sigue en pie y se llega por su URL
 ];
 

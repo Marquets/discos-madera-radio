@@ -47,14 +47,14 @@
 
 /* Live no tiene nada que ver con la playlist de Spotify, así que su enlace se esconde ahí.
    visibility y no display, para que el menú y el logo no cambien de sitio. */
-body:has(:not([style*="display: none"]) > #live) header a[href^="https://open.spotify.com"] {
+body:has(:not([style*="display: none"]) > :is(#live, #ambient)) header a[href^="https://open.spotify.com"] {
   visibility: hidden;
 }
 
 /* Y es negra hasta abajo: sin esto asoma el naranja del fondo bajo el vídeo. El logo no
    baja ahí, así que --chrome es solo el deslizante y la cabecera, para que el vídeo crezca
    todo lo que cabe en la pantalla. */
-body:has(:not([style*="display: none"]) > #live) {
+body:has(:not([style*="display: none"]) > :is(#live, #ambient)) {
   background: black;
   --chrome: 9.5rem;
 

@@ -36,6 +36,7 @@ const FADE_MS = 700;
 // How long the controls stay up over the full-screen sky after the last move
 const BAR_MS = 3000;
 const MIDI_KEY = "ambient-midi";
+const SECTIONS = ["Mixer", "Le Jazz", "Oscillator", "FX", "Cielo", "Output"];
 // Empty, recording the first pass, playing it round, or playing it while recording on top
 type Looper = "empty" | "recording" | "playing" | "overdub";
 const LOOPER_LABELS: Record<Looper, string> = { empty: "", recording: "● Rec", playing: "⟳ Loop", overdub: "● Encima" };
@@ -79,6 +80,9 @@ export function Ambient() {
   const [learn, setLearn] = useState<string | null | false>(false);
   // The one panel section showing its fine knobs, if any
   const [fold, setFold] = useState<string | null>(null);
+  // On a phone the panel is a sheet over the sky showing one section at a time, and folds down to its tabs
+  const [tab, setTab] = useState("Mixer");
+  const [sheet, setSheet] = useState(true);
   const access = useRef<MIDIAccess>(null);
   // Which knob each controller number turns, by its label
   const bindings = useRef(DEFAULT_BINDINGS);
@@ -507,6 +511,9 @@ export function Ambient() {
     </button>
   );
 
+  // A section shows on a phone only while its tab is picked and the sheet is up
+  const onPhone = (title: string) => (sheet && tab === title ? "max-sm:w-full" : "max-sm:hidden");
+
   const full = view === "idle" || view === "leaving" || manual;
   const fading = view === "leaving" || view === "returning";
 
@@ -533,14 +540,14 @@ export function Ambient() {
   return (
     // A panel after the Minimoog's over the sky: sections left to right in the order the sound
     // flows, each with its big knobs and a row of fine ones, in a rounded dark box
-    <div className="flex w-full flex-col gap-4">
+    <div className="flex w-full flex-1 flex-col gap-4">
       {/* The sky's box: in its place, or fixed over everything when full screen */}
       <div
         style={{ viewTransitionName: "cielo" }}
         className={`transition-opacity duration-700 motion-reduce:transition-none ${fading ? "pointer-events-none opacity-0" : ""} ${
           full
             ? `fixed inset-0 z-50 h-svh w-screen bg-black ${manual && bar ? "" : "cursor-none"}`
-            : "relative aspect-[4/5] w-full min-w-0 overflow-hidden rounded-xl bg-white/5 sm:aspect-[4/3] lg:aspect-auto lg:h-[50svh] hd:h-[calc(100svh-var(--chrome)-3rem)]"
+            : "relative aspect-[4/5] w-full min-w-0 overflow-hidden rounded-xl bg-white/5 max-sm:fixed max-sm:inset-x-0 max-sm:top-(--chrome) max-sm:bottom-0 max-sm:aspect-auto max-sm:rounded-none sm:aspect-[4/3] lg:aspect-auto lg:min-h-80 lg:flex-1"
         }`}
       >
         <canvas
@@ -551,7 +558,7 @@ export function Ambient() {
           onPointerDown={onPointer}
           onPointerMove={onPointer}
           onPointerUp={() => (lastDegree.current = null)}
-          className="block h-full w-full touch-none -outline-offset-4 focus-visible:outline-2 focus-visible:outline-accent"
+          className="absolute inset-0 block size-full touch-none -outline-offset-4 focus-visible:outline-2 focus-visible:outline-accent"
         />
         <p aria-live="polite" className="absolute top-3 left-3 font-mono text-xs text-white uppercase drop-shadow">
           {LOOPER_LABELS[looper]}
@@ -564,20 +571,43 @@ export function Ambient() {
       </div>
       {/* Over the sky the panel sits in a rounded dark box; from hd (globals.css) up it moves into the
           logo's band, measured like globals.css's --chrome, each section's fine knobs dropping below it */}
-      <div className="order-first flex items-stretch overflow-hidden rounded-xl hd:absolute hd:inset-x-0 hd:-top-36 hd:h-36 hd:overflow-visible">
-        <div className="flex flex-1 flex-wrap justify-center gap-x-2 gap-y-4 rounded-2xl border border-line/30 bg-panel px-3 py-4 font-mono text-[9px] uppercase hd:grid hd:grid-cols-[1fr_19rem_1fr] hd:items-center hd:gap-x-9 hd2:gap-x-28 hd:border-0 hd:bg-transparent hd:px-8 hd:py-0 hd:text-[9px] hd2:text-[10px]">
+      <div className="order-first flex items-stretch overflow-hidden rounded-xl max-sm:fixed max-sm:inset-x-0 max-sm:bottom-0 max-sm:z-10 max-sm:rounded-b-none hd:absolute hd:inset-x-0 hd:-top-36 hd:h-36 hd:overflow-visible">
+        <div className="flex flex-1 flex-wrap justify-center gap-x-2 gap-y-4 rounded-2xl border border-line/30 bg-panel px-3 py-4 font-mono max-sm:max-h-[60svh] max-sm:flex-col max-sm:flex-nowrap max-sm:gap-y-3 max-sm:overflow-y-auto max-sm:rounded-b-none max-sm:border-x-0 max-sm:border-b-0 max-sm:bg-panel/95 max-sm:px-2 max-sm:pt-2 max-sm:pb-[max(1rem,env(safe-area-inset-bottom))] max-sm:backdrop-blur text-[9px] uppercase hd:grid hd:grid-cols-[1fr_19rem_1fr] hd:items-center hd:gap-x-9 hd2:gap-x-28 hd:border-0 hd:bg-transparent hd:px-8 hd:py-0 hd:text-[9px] hd2:text-[10px]">
+          {/* Only on a phone: a tab per section, the power button, and the fold */}
+          <div role="tablist" aria-label="Secciones" className="order-first flex items-center gap-1 sm:hidden">
+            <div className="flex flex-1 gap-1 overflow-x-auto">
+              {SECTIONS.map((title) => (
+                <button
+                  key={title}
+                  role="tab"
+                  aria-selected={sheet && tab === title}
+                  onClick={() => {
+                    setTab(title);
+                    setSheet(true);
+                  }}
+                  className="shrink-0 rounded-md px-2 py-1.5 font-bold tracking-[0.15em] text-line/60 uppercase aria-selected:bg-line/10 aria-selected:text-line"
+                >
+                  {title}
+                </button>
+              ))}
+            </div>
+            <RoundButton label={on ? "Apagar" : "Encender"} path={POWER} pressed={on} onClick={toggle} />
+            <button onClick={() => setSheet(!sheet)} aria-expanded={sheet} aria-label={sheet ? "Plegar controles" : "Desplegar controles"} className="px-2 text-sm">
+              {sheet ? "▾" : "▴"}
+            </button>
+          </div>
           <div className="contents hd:col-start-1 hd:ml-12 hd:flex hd:justify-self-end hd:divide-x hd:divide-line/15 hd:rounded-2xl hd:border hd:border-line/30 hd:bg-panel">
-            <Section title="Mixer" className="order-3 hd:order-none">
+            <Section title="Mixer" className={`order-3 hd:order-none ${onPhone("Mixer")}`}>
               {CHANNELS.map(({ label }) => knob(label))}
               {knob("Pitch")}
             </Section>
-            <Section title="Le Jazz" className="order-1 hd:order-none">
+            <Section title="Le Jazz" className={`order-1 hd:order-none ${onPhone("Le Jazz")}`}>
               {/* Side by side reads better, but beside the logo there's only room for that from hd2 */}
               <div className="grid w-40 grid-cols-2 gap-2 hd:w-20 hd:grid-cols-1 hd:gap-1 hd2:w-40 hd2:grid-cols-2 hd2:gap-2">{tuning}</div>
             </Section>
           </div>
           <div className="contents hd:col-start-3 hd:flex hd:justify-self-start hd:divide-x hd:divide-line/15 hd:rounded-2xl hd:border hd:border-line/30 hd:bg-panel">
-            <Section title="Oscillator" open={fold === "Oscillator"} onToggle={() => setFold(fold === "Oscillator" ? null : "Oscillator")} className="order-2 hd:order-none" fine={fine(["Attack", "Decay"])}>
+            <Section title="Oscillator" open={fold === "Oscillator"} onToggle={() => setFold(fold === "Oscillator" ? null : "Oscillator")} className={`order-2 hd:order-none ${onPhone("Oscillator")}`} fine={fine(["Attack", "Decay"])}>
               <div className="w-16 self-center">{waves}</div>
               {knob("Cutoff")}
               {knob("Resonance")}
@@ -586,7 +616,7 @@ export function Ambient() {
               title="FX"
               open={fold === "FX"}
               onToggle={() => setFold(fold === "FX" ? null : "FX")}
-              className="order-4 hd:order-none"
+              className={`order-4 hd:order-none ${onPhone("FX")}`}
               fine={
                 <div className="flex flex-col items-center gap-2">
                   <div className="flex gap-3">{fine(["Delay time", "Feedback", "Delay tone"])}</div>
@@ -597,14 +627,17 @@ export function Ambient() {
               {knob("Delay")}
               {knob("Reverb")}
             </Section>
-            <Section title="Cielo" open={fold === "Cielo"} onToggle={() => setFold(fold === "Cielo" ? null : "Cielo")} className="order-5 hd:order-none" fine={fine(["Saturación"])}>
+            <Section title="Cielo" open={fold === "Cielo"} onToggle={() => setFold(fold === "Cielo" ? null : "Cielo")} className={`order-5 hd:order-none ${onPhone("Cielo")}`} fine={fine(["Saturación"])}>
               {knob("Luz")}
               {knob("Caos")}
             </Section>
-            <Section title="Output" open={fold === "Output"} onToggle={() => setFold(fold === "Output" ? null : "Output")} className="order-6 hd:order-none" fine={midiControls}>
+            <Section title="Output" open={fold === "Output"} onToggle={() => setFold(fold === "Output" ? null : "Output")} className={`order-6 hd:order-none ${onPhone("Output")}`} fine={midiControls}>
               {knob("Volume", "big")}
               <div className="flex flex-col items-center gap-2 self-center">
-                <RoundButton label={on ? "Apagar" : "Encender"} path={POWER} pressed={on} onClick={toggle} />
+                {/* On a phone the power button already sits in the tab bar */}
+                <div className="max-sm:hidden">
+                  <RoundButton label={on ? "Apagar" : "Encender"} path={POWER} pressed={on} onClick={toggle} />
+                </div>
                 <RoundButton bare label="Cómo funciona" path={INFO} onClick={() => info.current?.showModal()} />
               </div>
             </Section>
@@ -720,17 +753,17 @@ function Section({ title, fine, open, onToggle, small, className, children }: Se
   return (
     // Its small bold title at the top left, as printed on a hardware panel; the panel draws the boxes
     <section aria-label={title} className={`relative flex min-w-0 flex-col gap-2.5 ${small ? "" : "px-3 py-2 hd:px-1.5 hd:py-1.5 hd2:px-2.5"} ${className ?? ""}`}>
-      <h2 className="flex items-center gap-1 font-mono text-[10px] font-bold tracking-[0.15em] text-line/80">
+      <h2 className={`flex items-center gap-1 font-mono text-[10px] font-bold tracking-[0.15em] text-line/80 ${small ? "" : "max-sm:sr-only"}`}>
         <span aria-hidden>{title}</span>
         {fine && (
-          <button onClick={onToggle} aria-expanded={open} aria-label={`Más controles de ${title}`} className="px-1 text-vivo hover:text-white">
+          <button onClick={onToggle} aria-expanded={open} aria-label={`Más controles de ${title}`} className="px-1 text-vivo hover:text-white max-sm:hidden">
             {open ? "▾" : "▸"}
           </button>
         )}
       </h2>
       <div className={`flex items-start justify-center ${small ? "gap-3" : "gap-4 hd:gap-2.5 hd2:gap-3"}`}>{children}</div>
-      {fine && open && (
-        <div className="flex items-start justify-center gap-4 pt-2 hd:absolute hd:top-full hd:left-1/2 hd:z-20 hd:mt-2 hd:w-max hd:-translate-x-1/2 hd:rounded-xl hd:border hd:border-line/30 hd:bg-panel hd:p-3 hd:pt-4">
+      {fine && (
+        <div className={`flex items-start justify-center gap-4 pt-2 ${open ? "" : "hidden max-sm:flex"} hd:absolute hd:top-full hd:left-1/2 hd:z-20 hd:mt-2 hd:w-max hd:-translate-x-1/2 hd:rounded-xl hd:border hd:border-line/30 hd:bg-panel hd:p-3 hd:pt-4`}>
           {fine}
         </div>
       )}

@@ -286,7 +286,8 @@
       "spotifyUri": "spotify:track:2VJbSC89djtVH9C1ljoQEn",
       "durationSec": 309,
       "firstSeenAt": "2026-10-23T14:36:59.827Z",
-      "cover": "https://image-cdn-fa.spotifycdn.com/image/ab67616d00001e02d9b8b93084ab7038dd146216"
+      "cover": "https://image-cdn-fa.spotifycdn.com/image/ab67616d00001e02d9b8b93084ab7038dd146216",
+      "youtubeId": "KaWhQF-27zU"
     },
     {
       "id": "2FqwKJ2zLAOZmtwf3Eq8IA",
@@ -313,7 +314,8 @@
       "spotifyUri": "spotify:track:1kG0UxwsJi6EDlNQPg4TPu",
       "durationSec": 187,
       "firstSeenAt": "2026-10-23T14:36:59.827Z",
-      "cover": "https://image-cdn-ak.spotifycdn.com/image/ab67616d00001e02de10b04dc1337983e696e4f3"
+      "cover": "https://image-cdn-ak.spotifycdn.com/image/ab67616d00001e02de10b04dc1337983e696e4f3",
+      "youtubeId": "b4LyYFh0y0k"
     },
     {
       "id": "3H7CwBK4W3MQGOnN0h5vic",
@@ -322,7 +324,8 @@
       "spotifyUri": "spotify:track:3H7CwBK4W3MQGOnN0h5vic",
       "durationSec": 374,
       "firstSeenAt": "2026-10-23T14:36:59.827Z",
-      "cover": "https://image-cdn-fa.spotifycdn.com/image/ab67616d00001e02e7d6e23a713e03714e796f79"
+      "cover": "https://image-cdn-fa.spotifycdn.com/image/ab67616d00001e02e7d6e23a713e03714e796f79",
+      "youtubeId": "_Ed6rSBGnj0"
     },
     {
       "id": "320kcPdTD32bPihVd9ad84",
@@ -359,7 +362,115 @@
       "durationSec": 259,
       "firstSeenAt": "2026-10-23T14:36:59.827Z",
       "cover": "https://image-cdn-ak.spotifycdn.com/image/ab67616d00001e02f5c131ee15593dc40031b73b"
+    },
+    {
+      "id": "0qaMBOFU8TjvmZgB9YaBfP",
+      "title": "Look For Your Mind",
+      "artist": "The Lemon Twigs",
+      "spotifyUri": "spotify:track:0qaMBOFU8TjvmZgB9YaBfP",
+      "durationSec": 138,
+      "firstSeenAt": "2026-10-26T11:44:05.428Z",
+      "cover": "https://image-cdn-fa.spotifycdn.com/image/ab67616d00001e02e45094c8e7387ddb85f82e12"
+    },
+    {
+      "id": "5AHLePht8HEwMCNdYTu4jd",
+      "title": "A Dream Is All I Know",
+      "artist": "The Lemon Twigs",
+      "spotifyUri": "spotify:track:5AHLePht8HEwMCNdYTu4jd",
+      "durationSec": 223,
+      "firstSeenAt": "2026-10-26T11:44:05.428Z",
+      "cover": "https://image-cdn-fa.spotifycdn.com/image/ab67616d00001e02ae0816a92b256aadd9870e1e"
+    },
+    {
+      "id": "6QDbtyHTTDKs2VnxNyqDVn",
+      "title": "Regálame Esta Noche",
+      "artist": "Roberto Cantoral",
+      "spotifyUri": "spotify:track:6QDbtyHTTDKs2VnxNyqDVn",
+      "durationSec": 195,
+      "firstSeenAt": "2026-10-26T11:44:05.428Z",
+      "cover": "https://image-cdn-fa.spotifycdn.com/image/ab67616d00001e02ff6eaa6a6e146f1392c47eb7"
+    },
+    {
+      "id": "1IXY846kp1yEYqLhAIJNyu",
+      "title": "you see a dragon in the cloud, i see a cloud in the dragon",
+      "artist": "coulou's cafe, COULOU",
+      "spotifyUri": "spotify:track:1IXY846kp1yEYqLhAIJNyu",
+      "durationSec": 261,
+      "firstSeenAt": "2026-10-26T11:44:05.428Z",
+      "cover": "https://image-cdn-ak.spotifycdn.com/image/ab67616d00001e0215c405e63ec6db7e6575befc"
+    },
+    {
+      "id": "1iGjcEPJeXlLRYZVue1WXk",
+      "title": "Sweet Baby",
+      "artist": "Grateful Shred",
+      "spotifyUri": "spotify:track:1iGjcEPJeXlLRYZVue1WXk",
+      "durationSec": 341,
+      "firstSeenAt": "2026-10-26T11:44:05.428Z",
+      "cover": "https://image-cdn-fa.spotifycdn.com/image/ab67616d00001e0224efac6f4a3098f586995e04"
+    },
+    {
+      "id": "00F2J6Du0rcyvY6rP1UHKW",
+      "title": "Colorful Revolution",
+      "artist": "The Redwalls",
+      "spotifyUri": "spotify:track:00F2J6Du0rcyvY6rP1UHKW",
+      "durationSec": 223,
+      "firstSeenAt": "2026-10-26T11:44:05.428Z",
+      "cover": "https://image-cdn-ak.spotifycdn.com/image/ab67616d00001e02440342709771b76af2f8ff6a"
+    },
+    {
+      "id": "2cgUuAbgKxogUes21l6BSq",
+      "title": "River Rises",
+      "artist": "The Gaddabouts, Edie Brickell, Steve Gadd, Andy Fairweather Low, Pino Palladino, Axel Tosca, Pedrito Martinez",
+      "spotifyUri": "spotify:track:2cgUuAbgKxogUes21l6BSq",
+      "durationSec": 350,
+      "firstSeenAt": "2026-10-26T11:44:05.428Z",
+      "cover": "https://image-cdn-fa.spotifycdn.com/image/ab67616d00001e02ff45c82365492cfd11c949d2"
+    },
+    {
+      "id": "1jzqp5fogF52Sl7vB9i51j",
+      "title": "California Stars",
+      "artist": "Billy Bragg, Wilco",
+      "spotifyUri": "spotify:track:1jzqp5fogF52Sl7vB9i51j",
+      "durationSec": 299,
+      "firstSeenAt": "2026-10-26T11:44:05.428Z",
+      "cover": "https://image-cdn-fa.spotifycdn.com/image/ab67616d00001e023efb1e841f07602056914a5e"
+    },
+    {
+      "id": "5GWCndQ8ykzf6rYRvwrFcj",
+      "title": "Anyone Who Knows What Love Is (Will Understand)",
+      "artist": "Irma Thomas",
+      "spotifyUri": "spotify:track:5GWCndQ8ykzf6rYRvwrFcj",
+      "durationSec": 176,
+      "firstSeenAt": "2026-10-26T11:44:05.428Z",
+      "cover": "https://image-cdn-fa.spotifycdn.com/image/ab67616d00001e02251c20176b5695f6a2326d81"
+    },
+    {
+      "id": "0QMHVTnrFTQJoaqmkdsKhT",
+      "title": "I Wish - Radio Edit",
+      "artist": "Skee-Lo",
+      "spotifyUri": "spotify:track:0QMHVTnrFTQJoaqmkdsKhT",
+      "durationSec": 252,
+      "firstSeenAt": "2026-10-26T11:44:05.428Z",
+      "cover": "https://image-cdn-ak.spotifycdn.com/image/ab67616d00001e025e2bca5e5a3f48064f2300be"
+    },
+    {
+      "id": "6lOCXWGSrd9rCOt3ziKlJk",
+      "title": "I Know You Are (But What Am I Thinking)",
+      "artist": "@",
+      "spotifyUri": "spotify:track:6lOCXWGSrd9rCOt3ziKlJk",
+      "durationSec": 172,
+      "firstSeenAt": "2026-10-26T11:44:05.428Z",
+      "cover": "https://image-cdn-fa.spotifycdn.com/image/ab67616d00001e0293c812017763535bb202b703"
+    },
+    {
+      "id": "2PTJGyZ11tvpfDUUp2enxD",
+      "title": "Qué Hay Más Grande Que Este Amor",
+      "artist": "Teo Planell",
+      "spotifyUri": "spotify:track:2PTJGyZ11tvpfDUUp2enxD",
+      "durationSec": 359,
+      "firstSeenAt": "2026-10-26T11:44:05.428Z",
+      "cover": "https://image-cdn-fa.spotifycdn.com/image/ab67616d00001e0202f64ce89990f90f8c608bd6"
     }
   ],
-  "lastSyncAt": "2026-10-23T14:45:13.450Z"
+  "lastSyncAt": "2026-10-27T09:45:25.501Z"
 }

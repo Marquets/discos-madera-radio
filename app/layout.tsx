@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Anton, Space_Mono } from "next/font/google";
 import Link from "next/link";
 import { Suspense } from "react";
@@ -16,7 +16,12 @@ const spaceMono = Space_Mono({ variable: "--font-space-mono", weight: ["400", "7
 export const metadata: Metadata = {
   title: "Discos Madera Radio",
   description: "La música que vamos descubriendo, sonando en directo",
+  // iOS ignores the manifest's icons and name, so they go here too
+  appleWebApp: { title: "Discos Madera", statusBarStyle: "black" },
+  icons: { apple: "/icons/icon-180.png" },
 };
+
+export const viewport: Viewport = { themeColor: "#000000" };
 
 async function OnAir() {
   const tracks = (await getTracks()).toSorted((a, b) => a.firstSeenAt.localeCompare(b.firstSeenAt));

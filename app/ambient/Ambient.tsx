@@ -5,6 +5,7 @@ import { flushSync } from "react-dom";
 import { KEYS, MODES, touchDegree } from "@/lib/ambient";
 import { createEngine, type Channel, type Echo, type Engine, type Reverb } from "./engine";
 import { Knob } from "./Knob";
+import { DEFAULT_BINDINGS, noteDegree } from "./midi";
 import { MAX_STARS, skyColors, startSky } from "./sky";
 
 const CHANNELS: { channel: Channel; label: string }[] = [
@@ -26,6 +27,7 @@ const IDLE_MS = 20_000;
 const FADE_MS = 700;
 // How long the controls stay up over the full-screen sky after the last move
 const BAR_MS = 3000;
+const MIDI_KEY = "ambient-midi";
 const POWER = "M12 3v9M6.3 6.3a8 8 0 1 0 11.4 0";
 const EXPAND = "M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5";
 const SHRINK = "M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5";
@@ -58,6 +60,13 @@ export function Ambient() {
   const [on, setOn] = useState(false);
   const [view, setView] = useState<View>("normal");
   const [bar, setBar] = useState(true);
+  const [midi, setMidi] = useState<"off" | "on" | "unavailable">("off");
+  // Not assigning (false), assigning with no knob picked yet (null), or the knob waiting for a control
+  const [learn, setLearn] = useState<string | null | false>(false);
+  const access = useRef<MIDIAccess>(null);
+  // Which knob each controller number turns, by its label
+  const bindings = useRef(DEFAULT_BINDINGS);
+  const onMidi = useRef<(data: Uint8Array) => void>(() => {});
   const manual = view === "full";
   const [levels, setLevels] = useState(LEVELS);
   const [echo, setEcho] = useState(ECHO);
@@ -146,6 +155,36 @@ export function Ambient() {
     };
   }, [manual]);
 
+  // Every connected input, and any plugged in later, feeds the handler above
+  useEffect(() => {
+    const a = access.current;
+    if (midi !== "on" || !a) return;
+    const listen = (e: MIDIMessageEvent) => e.data && onMidi.current(e.data);
+    const attach = () => a.inputs.forEach((input) => (input.onmidimessage = listen));
+    attach();
+    a.onstatechange = attach;
+    return () => {
+      a.onstatechange = null;
+      a.inputs.forEach((input) => (input.onmidimessage = null));
+    };
+  }, [midi]);
+
+  async function connectMidi() {
+    if (midi === "on") return setLearn(learn === false ? null : false);
+    // A click is the only moment the browser lets sound start, and MIDI notes come later
+    start();
+    try {
+      access.current = await navigator.requestMIDIAccess();
+      try {
+        bindings.current = { ...DEFAULT_BINDINGS, ...JSON.parse(localStorage.getItem(MIDI_KEY) ?? "{}") };
+      } catch {}
+      setMidi("on");
+    } catch {
+      // No Web MIDI (Safari), or the visitor said no
+      setMidi("unavailable");
+    }
+  }
+
   function enterFull() {
     // Hides the browser's own bars too where it can; an iPhone can't, and gets the sky over the page
     document.documentElement.requestFullscreen?.().catch(() => {});
@@ -184,11 +223,13 @@ export function Ambient() {
       ripples.current = ripples.current.filter((r) => now - r.at < linger + echoes * echoMs);
       stars.fill(1);
       let n = 0;
+      // A MIDI note can land past the canvas's two octaves; it wraps back into them
+      const columns = 2 * scale.length;
       for (const r of ripples.current) {
         for (let k = 0; k <= echoes && n < MAX_STARS; k++) {
           const age = now - r.at - k * echoMs;
           if (age < 0 || age > linger) continue;
-          stars.set([(r.degree + 0.5) / (2 * scale.length), 1 - r.y, age / linger, k === 0 ? 1 : Math.min(1, echo.repeats ** k * echo.amount * 2)], n++ * 4);
+          stars.set([((((r.degree % columns) + columns) % columns) + 0.5) / columns, 1 - r.y, age / linger, k === 0 ? 1 : Math.min(1, echo.repeats ** k * echo.amount * 2)], n++ * 4);
         }
       }
 
@@ -253,24 +294,55 @@ export function Ambient() {
   // The main knobs: the mix and its sounds, then what colours them. Laid out beside the sky, and
   // again small along the bottom of it when it fills the screen
   const sounds: ComponentProps<typeof Knob>[] = [
-    { label: "Volumen", value: master.volume, min: 0, max: 1, initial: MASTER.volume, onChange: (volume) => setMaster({ ...master, volume }), format: percent },
+    { label: "Volumen", value: master.volume, min: 0, max: 1, initial: MASTER.volume, onChange: (volume) => setMaster((s) => ({ ...s, volume })), format: percent },
     ...CHANNELS.map(({ channel, label }) => ({
       label,
       value: levels[channel],
       min: 0,
       max: 1,
       initial: LEVELS[channel],
-      onChange: (v: number) => setLevels({ ...levels, [channel]: v }),
+      onChange: (v: number) => setLevels((s) => ({ ...s, [channel]: v })),
       format: percent,
     })),
   ];
   const shades: ComponentProps<typeof Knob>[] = [
     // Turned all the way down is darkness
-    { label: "Luz", value: master.light, min: 0, max: 1, initial: MASTER.light, onChange: (light) => setMaster({ ...master, light }), format: percent },
-    { label: "Pitch", value: master.pitch, min: -12, max: 12, initial: MASTER.pitch, onChange: (pitch) => setMaster({ ...master, pitch }), format: signed },
-    { label: "Eco", value: echo.amount, min: 0, max: 1, initial: ECHO.amount, onChange: (amount) => setEcho({ ...echo, amount }), format: percent },
-    { label: "Reverb", value: reverb.amount, min: 0, max: 1, initial: REVERB.amount, onChange: (amount) => setReverb({ ...reverb, amount }), format: percent },
+    { label: "Luz", value: master.light, min: 0, max: 1, initial: MASTER.light, onChange: (light) => setMaster((s) => ({ ...s, light })), format: percent },
+    { label: "Pitch", value: master.pitch, min: -12, max: 12, initial: MASTER.pitch, onChange: (pitch) => setMaster((s) => ({ ...s, pitch })), format: signed },
+    { label: "Eco", value: echo.amount, min: 0, max: 1, initial: ECHO.amount, onChange: (amount) => setEcho((s) => ({ ...s, amount })), format: percent },
+    { label: "Reverb", value: reverb.amount, min: 0, max: 1, initial: REVERB.amount, onChange: (amount) => setReverb((s) => ({ ...s, amount })), format: percent },
   ];
+  const extras: ComponentProps<typeof Knob>[] = [
+    { label: "Tiempo eco", value: echo.time, min: 0.05, max: 1.5, initial: ECHO.time, onChange: (time) => setEcho((s) => ({ ...s, time })), format: (v) => `${Math.round(v * 1000)}ms` },
+    { label: "Repeticiones", value: echo.repeats, min: 0, max: 0.9, initial: ECHO.repeats, onChange: (repeats) => setEcho((s) => ({ ...s, repeats })), format: percent },
+    { label: "Color eco", value: echo.color, min: 400, max: 8000, initial: ECHO.color, onChange: (color) => setEcho((s) => ({ ...s, color })), format: kHz },
+    { label: "Tamaño reverb", value: reverb.size, min: 1, max: 10, initial: REVERB.size, onChange: (size) => setReverb((s) => ({ ...s, size })), format: (v) => `${v.toFixed(1)}s` },
+    { label: "Color reverb", value: reverb.color, min: 400, max: 12000, initial: REVERB.color, onChange: (color) => setReverb((s) => ({ ...s, color })), format: kHz },
+    { label: "Caos", value: visual.chaos, min: 0, max: 4, initial: VISUAL.chaos, onChange: (chaos) => setVisual((s) => ({ ...s, chaos })), format: (v) => v.toFixed(1) },
+    { label: "Saturación", value: visual.saturation, min: 0, max: 1.5, initial: VISUAL.saturation, onChange: (saturation) => setVisual((s) => ({ ...s, saturation })), format: percent },
+  ];
+  // Clicking a knob picks it while assigning MIDI
+  const learnable = (knob: ComponentProps<typeof Knob>) => ({ ...knob, selected: learn === knob.label, onSelect: learn === false ? undefined : () => setLearn(knob.label) });
+
+  // A note plays like a touch on the sky; a control turns the knob bound to it, or binds to the
+  // one picked while assigning. Refreshed every render so it always sees the latest state.
+  useEffect(() => {
+    onMidi.current = ([status, a, b]) => {
+      const type = status & 0xf0;
+      if (type === 0x90 && b > 0) return play(noteDegree(a, key, scale), b / 127);
+      if (type !== 0xb0) return;
+      if (learn) {
+        bindings.current = { ...Object.fromEntries(Object.entries(bindings.current).filter(([, label]) => label !== learn)), [a]: learn };
+        try {
+          localStorage.setItem(MIDI_KEY, JSON.stringify(bindings.current));
+        } catch {}
+        return setLearn(null);
+      }
+      const knob = [...sounds, ...shades, ...extras].find((k) => k.label === bindings.current[a]);
+      knob?.onChange(knob.min + (b / 127) * (knob.max - knob.min));
+    };
+  });
+
   const full = view === "idle" || view === "leaving" || manual;
   const fading = view === "leaving" || view === "returning";
 
@@ -311,14 +383,14 @@ export function Ambient() {
           {sounds.map((knob, i) => (
             // The whole mix first, set a little apart from the sounds it holds
             <div key={knob.label} className={i === 0 ? "xl:mr-4" : "contents"}>
-              <Knob {...knob} />
+              <Knob {...learnable(knob)} />
             </div>
           ))}
         </div>
         <div className="contents xl:col-start-3 xl:flex xl:items-center xl:gap-6 xl:justify-self-start">
           <div className="grid grid-cols-4 justify-items-center xl:flex xl:gap-6">
             {shades.map((knob) => (
-              <Knob key={knob.label} {...knob} />
+              <Knob key={knob.label} {...learnable(knob)} />
             ))}
           </div>
           {/* In the column layouts the button and selects go first and the extra settings last */}
@@ -349,13 +421,29 @@ export function Ambient() {
                 <summary className="cursor-pointer text-center text-xs hover:text-white xl:text-[10px]">Más ajustes</summary>
                 {/* Beside the logo there's no room below, so it drops over the sky */}
                 <div className="mt-4 grid grid-cols-3 justify-items-center gap-y-4 xl:absolute xl:top-full xl:right-0 xl:z-20 xl:mt-2 xl:w-72 xl:rounded-lg xl:border xl:border-accent/40 xl:bg-black xl:p-4">
-                  <Knob small label="Tiempo eco" value={echo.time} min={0.05} max={1.5} initial={ECHO.time} onChange={(time) => setEcho({ ...echo, time })} format={(v) => `${Math.round(v * 1000)}ms`} />
-                  <Knob small label="Repeticiones" value={echo.repeats} min={0} max={0.9} initial={ECHO.repeats} onChange={(repeats) => setEcho({ ...echo, repeats })} format={percent} />
-                  <Knob small label="Color eco" value={echo.color} min={400} max={8000} initial={ECHO.color} onChange={(color) => setEcho({ ...echo, color })} format={kHz} />
-                  <Knob small label="Tamaño reverb" value={reverb.size} min={1} max={10} initial={REVERB.size} onChange={(size) => setReverb({ ...reverb, size })} format={(v) => `${v.toFixed(1)}s`} />
-                  <Knob small label="Color reverb" value={reverb.color} min={400} max={12000} initial={REVERB.color} onChange={(color) => setReverb({ ...reverb, color })} format={kHz} />
-                  <Knob small label="Caos" value={visual.chaos} min={0} max={4} initial={VISUAL.chaos} onChange={(chaos) => setVisual({ ...visual, chaos })} format={(v) => v.toFixed(1)} />
-                  <Knob small label="Saturación" value={visual.saturation} min={0} max={1.5} initial={VISUAL.saturation} onChange={(saturation) => setVisual({ ...visual, saturation })} format={percent} />
+                  {extras.map((knob) => (
+                    <Knob key={knob.label} small {...learnable(knob)} />
+                  ))}
+                  <div className="col-span-3 flex flex-col items-center gap-1 pt-2">
+                    <button
+                      onClick={connectMidi}
+                      aria-pressed={learn !== false}
+                      className="border border-current px-2 py-1 hover:text-white aria-pressed:bg-white aria-pressed:text-black"
+                    >
+                      {midi !== "on" ? "Conectar MIDI" : learn === false ? "Asignar MIDI" : "Hecho"}
+                    </button>
+                    <p className="text-center normal-case" aria-live="polite">
+                      {midi === "unavailable"
+                        ? "Este navegador no tiene MIDI; prueba con Chrome"
+                        : learn === null
+                          ? "Pulsa un knob y mueve un mando del controlador"
+                          : learn
+                            ? `Mueve un mando para ${learn}`
+                            : midi === "on"
+                              ? "Teclado y knobs conectados"
+                              : ""}
+                    </p>
+                  </div>
                 </div>
               </details>
               <div className="order-first flex gap-2 self-end xl:order-none">

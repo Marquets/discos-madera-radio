@@ -4,8 +4,8 @@ export const DEFAULT_BINDINGS: Record<number, string> = {
   71: "Pad",
   72: "Drone",
   73: "Lluvia",
-  74: "Notas",
-  75: "Lienzo",
+  74: "Azar",
+  75: "Tus notas",
   76: "Luz",
   77: "Pitch",
 };

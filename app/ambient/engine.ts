@@ -5,6 +5,8 @@ export type Channel = "pad" | "drone" | "lluvia" | "notas" | "lienzo";
 export type Echo = { amount: number; time: number; repeats: number; color: number };
 // size is the tail in seconds
 export type Reverb = { amount: number; size: number; color: number };
+// How every note sounds: its waveform, attack and decay in seconds, and a low-pass filter (Hz, Q)
+export type Synth = { wave: OscillatorType; attack: number; decay: number; cutoff: number; resonance: number };
 
 const NOTE_TICK_MS = 400;
 
@@ -26,6 +28,7 @@ export function createEngine() {
   let light = 0.5;
   // Semitones on top of the key, not rounded, so turning the knob slides everything
   let pitch = 0;
+  let synth: Synth = { wave: "sine", attack: 0.01, decay: 3.5, cutoff: 6000, resonance: 1 };
 
   const out = ctx.createDynamicsCompressor();
   out.connect(ctx.destination);
@@ -123,27 +126,35 @@ export function createEngine() {
     for (const { osc, ratio } of drone) osc.frequency.setTargetAtTime((degreeHz(key + pitch, scale, 0) / 2) * ratio, now, glide);
   }
 
-  // A bell two octaves up from the pad; brightness adds its upper partial
+  // A note two octaves up from the pad, shaped by the synth settings; brightness adds its upper
+  // partials and opens the filter
   function bell(degree: number, brightness: number, into: GainNode) {
     const now = ctx.currentTime;
+    const { wave, attack, decay, cutoff, resonance } = synth;
     const hz = degreeHz(key + pitch, scale, degree + scale.length);
+    const end = now + attack + decay;
+    const filter = ctx.createBiquadFilter();
+    filter.type = "lowpass";
+    filter.frequency.value = cutoff * (0.5 + brightness);
+    filter.Q.value = resonance;
     const env = ctx.createGain();
     env.gain.setValueAtTime(0, now);
-    env.gain.linearRampToValueAtTime(0.25, now + 0.01);
-    env.gain.exponentialRampToValueAtTime(0.0001, now + 3.5);
-    env.connect(into);
+    env.gain.linearRampToValueAtTime(0.25, now + attack);
+    env.gain.exponentialRampToValueAtTime(0.0001, end);
+    filter.connect(env).connect(into);
     [
       [1, 1],
       [2.01, brightness * 0.5],
       [3.98, brightness * 0.15],
     ].forEach(([ratio, level]) => {
       const osc = ctx.createOscillator();
+      osc.type = wave;
       osc.frequency.value = hz * ratio;
       const g = ctx.createGain();
       g.gain.value = level;
-      osc.connect(g).connect(env);
+      osc.connect(g).connect(filter);
       osc.start(now);
-      osc.stop(now + 3.6);
+      osc.stop(end + 0.1);
     });
   }
 
@@ -191,6 +202,9 @@ export function createEngine() {
       reverbIn.disconnect(reverb);
       reverb.disconnect();
       reverb = next;
+    },
+    setSynth(value: Synth) {
+      synth = value;
     },
     setVolume(value: number) {
       master.gain.setTargetAtTime(value, ctx.currentTime, 0.05);

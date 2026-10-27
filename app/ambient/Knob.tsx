@@ -9,6 +9,8 @@ type Props = {
   max: number;
   initial: number;
   small?: boolean;
+  // The panel's main volume, a size up like the Minimoog's output
+  big?: boolean;
   // While MIDI is being assigned, a press picks the knob instead of turning it
   selected?: boolean;
   onSelect?(): void;
@@ -21,7 +23,7 @@ const TRAVEL = 150;
 const STEPS = 24;
 
 /** Turned by dragging up or down; arrows step through it, a double click puts it back where it started */
-export function Knob({ label, value, min, max, initial, small, selected, onSelect, onChange, format }: Props) {
+export function Knob({ label, value, min, max, initial, small, big, selected, onSelect, onChange, format }: Props) {
   const drag = useRef<{ y: number; value: number }>(null);
   const clamp = (v: number) => Math.min(max, Math.max(min, v));
   const step = (max - min) / STEPS;
@@ -63,7 +65,7 @@ export function Knob({ label, value, min, max, initial, small, selected, onSelec
         onPointerUp={() => (drag.current = null)}
         onDoubleClick={() => onChange(initial)}
         onKeyDown={onKeyDown}
-        className={`relative ${small ? "size-9" : "size-14 xl:size-11"} ${onSelect ? "cursor-pointer" : "cursor-ns-resize"} ${selected ? "ring-2 ring-white ring-offset-2 ring-offset-black" : ""} touch-none rounded-full border-2 border-current bg-white/5 outline-offset-4 focus-visible:outline-2 focus-visible:outline-accent`}
+        className={`relative ${small ? "size-9" : big ? "size-16 hd:size-14 hd2:size-16" : "size-12 hd:size-11 hd2:size-14"} ${onSelect ? "cursor-pointer" : "cursor-ns-resize"} ${selected ? "ring-2 ring-white ring-offset-2 ring-offset-black" : ""} touch-none rounded-full border-2 border-current bg-white/5 outline-offset-4 focus-visible:outline-2 focus-visible:outline-accent`}
       >
         <div className="absolute inset-0" style={{ rotate: `${angle}deg` }}>
           <span className="absolute top-1 left-1/2 h-3.5 w-0.5 -translate-x-1/2 bg-current" />

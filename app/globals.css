@@ -5,6 +5,10 @@
   --font-display: var(--font-anton);
   --font-mono: var(--font-space-mono);
   --color-accent: #f89028;
+  /* Wide enough for Ambient's knobs to fit either side of the logo */
+  --breakpoint-hd: 90rem;
+  /* And wide enough for them to grow there */
+  --breakpoint-hd2: 110rem;
 }
 
 /* Alto del deslizante más la cabecera, que van encima del hero dentro de la banda
@@ -60,6 +64,20 @@ body:has(:not([style*="display: none"]) > :is(#live, #ambient)) {
 
   @media (min-width: 640px) {
     --chrome: 11.25rem;
+  }
+}
+
+/* Ambient calla la radio, así que el deslizante sobra ahí, y --chrome pierde sus 2.25rem para
+   que el cielo crezca hasta arriba */
+body:has(:not([style*="display: none"]) > #ambient) {
+  --chrome: 7.25rem;
+
+  @media (min-width: 640px) {
+    --chrome: 9rem;
+  }
+
+  .ticker {
+    display: none;
   }
 }
 

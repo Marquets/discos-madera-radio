@@ -24,3 +24,9 @@ export function degreeHz(key: number, scale: number[], degree: number) {
 export function touchDegree(x: number, scaleLength: number) {
   return Math.min(2 * scaleLength - 1, Math.max(0, Math.floor(x * 2 * scaleLength)));
 }
+
+/** Whether a loop note at `t` falls in the stretch the clock just covered, from `from` (exclusive) to
+ * `to`, both positions in the loop; when the clock came round, the stretch wraps past the end */
+export function passed(t: number, from: number, to: number) {
+  return from <= to ? t > from && t <= to : t > from || t <= to;
+}

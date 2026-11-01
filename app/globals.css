@@ -5,19 +5,6 @@
   --font-display: var(--font-anton);
   --font-mono: var(--font-space-mono);
   --color-accent: #f89028;
-  /* Ambient's panel, after a hardware sequencer but in the site's warm colours: a near-black
-     ground, cream lines, the brand orange on the knobs, a hotter orange for the volume and the
-     wave keys, and the sky's blue for whatever is switched on */
-  --color-fondo: #14110e;
-  --color-panel: #1e1914;
-  --color-line: #ecdcc4;
-  --color-knob: #f89028;
-  --color-vivo: #ff5a36;
-  --color-activo: #8fd3f5;
-  /* Wide enough for Ambient's knobs to fit either side of the logo */
-  --breakpoint-hd: 90rem;
-  /* And wide enough for them to grow there */
-  --breakpoint-hd2: 110rem;
 }
 
 /* Alto del deslizante más la cabecera, que van encima del hero dentro de la banda
@@ -60,40 +47,19 @@
 
 /* Live no tiene nada que ver con la playlist de Spotify, así que su enlace se esconde ahí.
    visibility y no display, para que el menú y el logo no cambien de sitio. */
-body:has(:not([style*="display: none"]) > :is(#live, #ambient)) header a[href^="https://open.spotify.com"] {
+body:has(:not([style*="display: none"]) > #live) header a[href^="https://open.spotify.com"] {
   visibility: hidden;
 }
 
 /* Y es negra hasta abajo: sin esto asoma el naranja del fondo bajo el vídeo. El logo no
    baja ahí, así que --chrome es solo el deslizante y la cabecera, para que el vídeo crezca
    todo lo que cabe en la pantalla. */
-body:has(:not([style*="display: none"]) > :is(#live, #ambient)) {
+body:has(:not([style*="display: none"]) > #live) {
   background: black;
   --chrome: 9.5rem;
 
   @media (min-width: 640px) {
     --chrome: 11.25rem;
-  }
-}
-
-/* Ambient calla la radio, así que el deslizante sobra ahí, y --chrome pierde sus 2.25rem para
-   que el cielo crezca hasta arriba */
-body:has(:not([style*="display: none"]) > #ambient) {
-  --chrome: 7.25rem;
-
-  @media (min-width: 640px) {
-    --chrome: 9rem;
-  }
-
-  .ticker {
-    display: none;
-  }
-
-  /* Slate from top to bottom, the logo's band included */
-  background: var(--color-fondo);
-
-  div:has(> header) {
-    background: var(--color-fondo);
   }
 }
 

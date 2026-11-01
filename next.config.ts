@@ -7,6 +7,10 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [{ protocol: "https", hostname: "*.spotifycdn.com" }, { protocol: "https", hostname: "i.scdn.co" }],
   },
+  // Ambient moved to its own site, and Madera Tools links to it
+  async redirects() {
+    return [{ source: "/ambient", destination: "/madera-tools", permanent: true }];
+  },
   turbopack: {
     rules: {
       "*.css": {

@@ -63,7 +63,7 @@ const VOLUME_KEY = "radio-volume";
 const JINGLE_KEY = "radio-cortinilla";
 const ANIM_KEY = "radio-animacion";
 // The logo's animations while a jingle plays, one per jingle in this order; globals.css has each one
-const LOGO_ANIMS = ["baile", "ondas", "cinta", "neon", "glitch", "dibujo"];
+const LOGO_ANIMS = ["baile", "ondas", "cinta", "neon", "glitch", "dibujo", "dibus"];
 
 let spotifyApi: Promise<IFrameAPI> | undefined;
 
@@ -111,6 +111,8 @@ export function RadioPlayer({ tracks, thanks }: { tracks: RadioTrack[]; thanks: 
     mutedRef.current = !muted;
     setMuted(!muted);
     applyMute.current(!muted);
+    // For the page's own sounds, like the snail's (Paseo.tsx)
+    document.documentElement.toggleAttribute("data-silencio", !muted);
   }
   useEffect(() => {
     volumeRef.current = volume;
@@ -145,6 +147,9 @@ export function RadioPlayer({ tracks, thanks }: { tracks: RadioTrack[]; thanks: 
       // One of the logo's animations for the whole jingle, taking turns; remembered like the
       // jingles' order, so a new visit carries on with the next one
       root.style.setProperty("--fase", `${Number.isFinite(jingle.duration) ? jingle.duration : 16}s`);
+      // ?cortinilla=<name> picks that animation, to try it out
+      const tryOut = new URLSearchParams(location.search).get("cortinilla");
+      if (tryOut && LOGO_ANIMS.includes(tryOut)) return void (root.dataset.anim = tryOut);
       let turn = 0;
       try {
         turn = Number(localStorage.getItem(ANIM_KEY)) || 0;
@@ -227,6 +232,8 @@ export function RadioPlayer({ tracks, thanks }: { tracks: RadioTrack[]; thanks: 
       } catch {}
       jingle.onended = () => {
         jingleReady = true;
+        // Once a jingle is over, one of the page's characters crosses (Paseo.tsx)
+        window.dispatchEvent(new Event("radio:cortinilla"));
         playNext();
       };
       // A jingle that can't play must not stop the radio

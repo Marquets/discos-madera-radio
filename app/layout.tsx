@@ -5,6 +5,7 @@ import { Suspense } from "react";
 import { playlistUrl } from "@/lib/spotify";
 import { recentContributors } from "@/lib/contributors";
 import { getTracks } from "@/lib/sync";
+import { CortinillaDibus } from "./CortinillaDibus";
 import { Logo } from "./Logo";
 import { NavLinks } from "./NavLinks";
 import { RadioPlayer } from "./RadioPlayer";
@@ -39,19 +40,17 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             <OnAir />
           </Suspense>
           <header className="grid grid-cols-[1fr_auto_1fr] items-center gap-4 px-4 pb-6 pt-4 font-display text-xl uppercase leading-none sm:items-start sm:px-8 sm:text-2xl">
-            {/* Equal 1fr side columns keep the logo centred however wide the sides grow.
-                On a phone the sides shrink to an icon each, so it all fits in one row. */}
-            <NavLinks />
+            {/* Equal 1fr side columns keep the logo centred however wide the sides grow; the
+                right one stays empty since the playlist link moved into the menu. */}
+            <NavLinks playlist={playlistUrl()} />
             <Link href="/" className="flex flex-col items-center gap-1">
               <Logo className="h-14 w-auto sm:h-20" />
               <span className="font-mono text-xs tracking-[0.5em] sm:text-sm">Radio</span>
             </Link>
-            <a href={playlistUrl()} target="_blank" rel="noreferrer" className="-m-3 justify-self-end p-3 text-right text-2xl hover:underline sm:m-0 sm:p-0">
-              <span className="max-sm:sr-only">Ir a la playlist </span>↗
-            </a>
           </header>
         </div>
         <main>{children}</main>
+        <CortinillaDibus />
       </body>
     </html>
   );

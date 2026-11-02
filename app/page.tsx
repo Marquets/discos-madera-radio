@@ -1,6 +1,7 @@
 import { MAX_LENGTH } from "@/lib/messages";
 import { getTracks } from "@/lib/sync";
 import { Mensajes } from "./Mensajes";
+import { Paseo } from "./Paseo";
 import { TapeDeck } from "./TapeDeck";
 import { TrackGrid } from "./TrackGrid";
 
@@ -19,6 +20,7 @@ export default async function Home() {
         // fold and scrolling is what reveals them. svh, not vh, because a phone's
         // address bar shrinks the viewport and vh would overshoot behind it.
         <div className="hero relative flex min-h-[calc(100svh-var(--chrome))] flex-col bg-black max-sm:justify-center px-4 pb-12 text-accent sm:px-8">
+          <Paseo />
           <TapeDeck tracks={onAir} />
           {/* Hueco del reproductor de Spotify, que globals.css coloca encima: dice lo
               mismo que decía el pie "now playing", así que hace de pie además de

@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { nowPlaying } from "@/lib/schedule";
+import { DRAWINGS } from "./CortinillaDibus";
 
 type DeckTrack = { id: string; title: string; artist: string; durationSec: number; firstSeenAt: string };
 
@@ -53,6 +54,63 @@ function Reel({ cx, tape, angle }: { cx: number; tape: number; angle: number }) 
   );
 }
 
+const dibuUrl = (n: number) => `url(/dibus/${String(n).padStart(2, "0")}.webp)`;
+const TRUNK = 25; // the tree trunk with a face, the one it shows to begin with
+
+/**
+ * One of Adri's drawings in the gap between the reels, the trunk to begin with. Hovering
+ * the tape deck or the logo runs through all of them like a gif; leaving stops on
+ * whichever was showing.
+ */
+function ReelDibu() {
+  const [n, setN] = useState(TRUNK);
+  const spot = useRef<SVGForeignObjectElement>(null);
+
+  useEffect(() => {
+    const deck = spot.current?.ownerSVGElement;
+    const logo = document.querySelector('header a[href="/"]');
+    const areas = [deck, logo].filter((el): el is Element => !!el);
+    let timer: ReturnType<typeof setInterval> | undefined;
+
+    const hovered = () => areas.some((el) => el.matches(":hover"));
+    const stop = () => {
+      clearInterval(timer);
+      timer = undefined;
+    };
+    const play = () => {
+      if (timer) return;
+      // A mask still loading shows nothing, which would leave gaps in the gif
+      for (let i = 1; i <= DRAWINGS; i++) new Image().src = `/dibus/${String(i).padStart(2, "0")}.webp`;
+      timer = setInterval(() => {
+        // Going straight into the player's iframe never reports leaving, so check
+        if (!hovered()) return stop();
+        setN((m) => (m % DRAWINGS) + 1);
+      }, 110);
+    };
+    // Moving from one area to the other leaves one first, so look before stopping
+    const leave = () => setTimeout(() => !hovered() && stop());
+
+    for (const el of areas) {
+      el.addEventListener("pointerenter", play);
+      el.addEventListener("pointerleave", leave);
+    }
+    return () => {
+      stop();
+      for (const el of areas) {
+        el.removeEventListener("pointerenter", play);
+        el.removeEventListener("pointerleave", leave);
+      }
+    };
+  }, []);
+
+  return (
+    // Between the reels' rims (x 295 to 445), under the meter and over the tape head
+    <foreignObject ref={spot} x="327.5" y="133.5" width="85" height="85">
+      <div className="dibu-bobinas" style={{ "--dibu": dibuUrl(n) } as React.CSSProperties} />
+    </foreignObject>
+  );
+}
+
 export function TapeDeck({ tracks }: { tracks: DeckTrack[] }) {
   const { now, reduced } = useClock();
   const np = now === null ? null : nowPlaying(tracks, now);
@@ -82,6 +140,7 @@ export function TapeDeck({ tracks }: { tracks: DeckTrack[] }) {
         <circle cx="480" cy="282" r="12" fill="#000" stroke={CREAM} strokeWidth="2.5" />
         <circle cx="540" cy="287" r="7" fill={WIRE} />
         <rect x={HEAD_X - 17} y="260" width="34" height="28" fill={CREAM} />
+        <ReelDibu />
       </svg>
     </figure>
   );

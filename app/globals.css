@@ -45,12 +45,6 @@
   }
 }
 
-/* Live no tiene nada que ver con la playlist de Spotify, así que su enlace se esconde ahí.
-   visibility y no display, para que el menú y el logo no cambien de sitio. */
-body:has(:not([style*="display: none"]) > #live) header a[href^="https://open.spotify.com"] {
-  visibility: hidden;
-}
-
 /* Y es negra hasta abajo: sin esto asoma el naranja del fondo bajo el vídeo. El logo no
    baja ahí, así que --chrome es solo el deslizante y la cabecera, para que el vídeo crezca
    todo lo que cabe en la pantalla. */
@@ -176,7 +170,7 @@ body:has(#radio[data-source="youtube"]) #reproductor {
 }
 
 /* Mientras suena una cortinilla el logo, ya en el centro, hace una de estas animaciones,
-   por turnos: RadioPlayer las va poniendo en data-anim (baile, ondas, cinta, neon, glitch, dibujo).
+   por turnos: RadioPlayer las va poniendo en data-anim (baile, ondas, cinta, neon, glitch, dibujo, dibus).
    --fase es lo que dura la cortinilla, para las que van de principio a fin. */
 
 /* overflow visible: al saltar o brillar, el logo se sale del lienzo del SVG y se cortaba */
@@ -209,6 +203,56 @@ html[data-anim="baile"] header a[href="/"] svg > :is(g, path) {
 
 html[data-anim="baile"] header a[href="/"] svg > path {
   animation-delay: -0.3s;
+}
+
+/* Dibus: el logo late y a su alrededor brotan dibujos de Adri que se mueven un poco y se
+   desvanecen (CortinillaDibus.tsx). Cada dibujo hace de máscara sobre el naranja del logo. */
+html[data-anim="dibus"] header a[href="/"] svg {
+  animation: latido 0.45s ease-in-out infinite alternate;
+}
+
+.dibu {
+  position: absolute;
+  width: 110px;
+  height: 110px;
+  translate: -50% -50%;
+  background: var(--color-accent);
+  mask: var(--dibu) center / contain no-repeat;
+  animation: dibu 2.2s ease-out forwards;
+}
+
+@keyframes dibu {
+  from {
+    opacity: 0;
+    transform: rotate(var(--turn)) scale(0.2);
+  }
+  12% {
+    opacity: 1;
+    transform: rotate(calc(var(--turn) * -0.5)) scale(1.1);
+  }
+  25% {
+    transform: rotate(var(--turn)) scale(1);
+  }
+  45% {
+    transform: rotate(calc(var(--turn) * -0.4)) scale(1);
+  }
+  65% {
+    opacity: 1;
+    transform: rotate(var(--turn)) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: rotate(var(--turn)) scale(0.85);
+  }
+}
+
+/* El dibujo entre las bobinas del magnetófono (TapeDeck.tsx): hace de máscara sobre el
+   naranja, como los de la cortinilla */
+.dibu-bobinas {
+  width: 100%;
+  height: 100%;
+  background: var(--color-accent);
+  mask: var(--dibu) center / contain no-repeat;
 }
 
 /* Ondas: anillos que salen de detrás del logo y se desvanecen, como la señal de una antena */
@@ -399,5 +443,55 @@ html[data-cortinilla] header a[href="/"] {
   /* Quietos, cada uno en el centro de su camino */
   .mensaje {
     animation: none;
+  }
+}
+
+
+/* La señora del taxi (Paseo.tsx): sus once fotogramas van en una tira que hace de máscara
+   sobre el naranja; --frame (de 0 a 1) dice qué trozo se ve */
+.taxi {
+  background: var(--color-accent);
+  mask: url(/dibus/taxi.webp) calc(var(--frame, 0) * 100%) 0 / 1100% 100% no-repeat;
+}
+
+/* Lo que grita a mitad de camino, recortado del mismo dibujo */
+.grito {
+  position: absolute;
+  width: 80px;
+  aspect-ratio: 153 / 120;
+  background: var(--color-accent);
+  mask: url(/dibus/taxi-grito.webp) center / contain no-repeat;
+  transform-origin: bottom left;
+  animation: burb 2.6s ease-out forwards;
+}
+
+/* Lo que dice el caracol al hacerle clic: un "BURB", recortado del dibujo */
+.burb {
+  position: absolute;
+  width: 44px;
+  aspect-ratio: 278 / 151;
+  background: var(--color-accent);
+  mask: url(/dibus/burb.webp) center / contain no-repeat;
+  transform-origin: bottom right;
+  animation: burb 2.4s ease-out forwards;
+}
+
+@keyframes burb {
+  from {
+    opacity: 0;
+    transform: scale(0.3) rotate(-8deg);
+  }
+  12% {
+    opacity: 1;
+    transform: scale(1.1) rotate(3deg);
+  }
+  22%,
+  75% {
+    opacity: 1;
+    transform: scale(1) rotate(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-12px) scale(1);
   }
 }

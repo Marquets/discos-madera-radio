@@ -14,7 +14,7 @@ const LINKS = [
 ];
 
 /** Folded behind one button, so the hero only carries the logo; the links drop in one after another */
-export function NavLinks() {
+export function NavLinks({ playlist }: { playlist: string }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const nav = useRef<HTMLElement>(null);
@@ -65,6 +65,15 @@ export function NavLinks() {
             </Link>
           </li>
         ))}
+        {/* Last, and out to Spotify in a new tab */}
+        <li
+          style={{ transitionDelay: open ? `${LINKS.length * 70}ms` : "0ms" }}
+          className={`transition-[opacity,translate] duration-300 ease-out motion-reduce:transition-none ${open ? "translate-y-0 opacity-100" : "-translate-y-3 opacity-0"}`}
+        >
+          <a href={playlist} target="_blank" rel="noreferrer" onClick={() => setOpen(false)} className="text-5xl decoration-4 underline-offset-4 hover:underline sm:text-4xl">
+            Playlist ↗
+          </a>
+        </li>
       </ul>
     </nav>
   );

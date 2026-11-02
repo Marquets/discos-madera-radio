@@ -546,7 +546,43 @@
       "durationSec": 266,
       "firstSeenAt": "2026-11-01T15:48:14.249Z",
       "cover": "https://image-cdn-fa.spotifycdn.com/image/ab67616d00001e026869ac350535afb4f244dc56"
+    },
+    {
+      "id": "5laT2a6iEq4IxgEDV9dSCr",
+      "title": "Cruz de Navajas",
+      "artist": "Mecano",
+      "spotifyUri": "spotify:track:5laT2a6iEq4IxgEDV9dSCr",
+      "durationSec": 302,
+      "firstSeenAt": "2026-11-02T11:30:44.677Z",
+      "cover": "https://image-cdn-fa.spotifycdn.com/image/ab67616d00001e0224391b27b1f7a0e421e178f2"
+    },
+    {
+      "id": "1NiAMp0CzUdG6e97VYRB1a",
+      "title": "In the Aeroplane Over the Sea",
+      "artist": "Neutral Milk Hotel",
+      "spotifyUri": "spotify:track:1NiAMp0CzUdG6e97VYRB1a",
+      "durationSec": 202,
+      "firstSeenAt": "2026-11-02T11:30:44.677Z",
+      "cover": "https://image-cdn-fa.spotifycdn.com/image/ab67616d00001e02bc1e41eed3ddbdfff6f2d74b"
+    },
+    {
+      "id": "5XF1o8AFbuiFeBgmlVICQZ",
+      "title": "Stem",
+      "artist": "Lower Dens",
+      "spotifyUri": "spotify:track:5XF1o8AFbuiFeBgmlVICQZ",
+      "durationSec": 126,
+      "firstSeenAt": "2026-11-02T11:30:44.677Z",
+      "cover": "https://image-cdn-fa.spotifycdn.com/image/ab67616d00001e02cf682fd4499c1b79bd621510"
+    },
+    {
+      "id": "19Qi2Cymjh7HDQESDrDBzs",
+      "title": "Autumn Sweater",
+      "artist": "Yo La Tengo",
+      "spotifyUri": "spotify:track:19Qi2Cymjh7HDQESDrDBzs",
+      "durationSec": 318,
+      "firstSeenAt": "2026-11-02T11:30:44.677Z",
+      "cover": "https://image-cdn-ak.spotifycdn.com/image/ab67616d00001e021f00d48ee488c62bc46d2418"
     }
   ],
-  "lastSyncAt": "2026-11-01T15:48:14.249Z"
+  "lastSyncAt": "2026-11-02T11:30:44.677Z"
 }

@@ -15,9 +15,10 @@ export default function ToolsPage() {
   return (
     <div className="px-4 pb-16 sm:px-8">
       <h1 className="pt-8 pb-10 text-center font-display text-7xl uppercase leading-none sm:text-9xl">Madera Tools</h1>
-      <ul className="mx-auto grid max-w-5xl gap-x-8 gap-y-12 sm:grid-cols-2">
+      {/* Two to a row, and a row that is not full sits in the middle rather than to the left */}
+      <ul className="mx-auto flex max-w-5xl flex-wrap justify-center gap-x-8 gap-y-12">
         {TOOLS.map((tool) => (
-          <li key={tool.href}>
+          <li key={tool.href} className="w-full sm:w-[calc(50%-1rem)]">
             <a href={tool.href} className="group flex flex-col gap-3">
               <div className="overflow-hidden border-2 border-black bg-black">
                 <Image

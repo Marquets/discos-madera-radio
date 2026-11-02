@@ -9,6 +9,10 @@ No necesita claves ni Premium: lee la playlist desde el reproductor incrustable 
 1. `cp .env.example .env.local` y pon el id de la playlist.
 2. `npm run dev` → http://127.0.0.1:3000
 
+## Logo
+
+La tipografía del logo se llama **Yerk**. El logo va dibujado en SVG en `app/Logo.tsx`, así que la web no carga la fuente.
+
 ## Dónde se guardan las canciones
 
 La radio recuerda todo lo que ha visto en la playlist, y eso hay que guardarlo en algún sitio:

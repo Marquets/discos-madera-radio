@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { nowPlaying } from "@/lib/schedule";
 
-type DeckTrack = { title: string; artist: string; durationSec: number };
+type DeckTrack = { id: string; title: string; artist: string; durationSec: number; firstSeenAt: string };
 
 // Discos Madera poster palette: orange on black
 const CREAM = "#f89028";
@@ -55,7 +55,7 @@ function Reel({ cx, tape, angle }: { cx: number; tape: number; angle: number }) 
 
 export function TapeDeck({ tracks }: { tracks: DeckTrack[] }) {
   const { now, reduced } = useClock();
-  const np = now === null ? null : nowPlaying(tracks.map((t) => t.durationSec), now);
+  const np = now === null ? null : nowPlaying(tracks, now);
   const track = np ? tracks[np.index] : null;
   const elapsed = np?.offsetSec ?? 0;
   const progress = track ? elapsed / track.durationSec : 0;

@@ -17,14 +17,15 @@ export function LivePlayer({ sets }: { sets: Live[] }) {
     let timer: ReturnType<typeof setTimeout> | undefined;
     let last: Progress | null = null;
     let playing = -1;
-    const durations = sets.map((s) => s.durationSec);
 
     function playNow() {
       clearTimeout(timer);
       last = null;
-      let np = nowPlaying(durations, Date.now())!;
+      // Sets aren't in any slot's list (lib/franjas.ts), so they all play round the clock
+      let np = nowPlaying(sets, Date.now())!;
       // A set that ends a moment before the clock does would otherwise start over
-      if (np.index === playing && durations[np.index] - np.offsetSec < 10) np = nowPlaying(durations, Date.now() + (durations[np.index] - np.offsetSec) * 1000 + 1)!;
+      const left = sets[np.index].durationSec - np.offsetSec;
+      if (np.index === playing && left < 10) np = nowPlaying(sets, Date.now() + left * 1000 + 1)!;
       const set = sets[np.index];
       playing = np.index;
       setCurrent(np.index);

@@ -14,6 +14,8 @@ export type RadioTrack = {
   title: string;
   artist: string;
   durationSec: number;
+  // When the radio first saw it, so new songs come up more often; live sets have none
+  firstSeenAt?: string;
 };
 
 // position and duration in ms; title only from YouTube, the video's own
@@ -212,10 +214,9 @@ export function RadioPlayer({ tracks, thanks }: { tracks: RadioTrack[]; thanks: 
       // few seconds into it. Each song and jingle adds that delay, so a long session drifts
       // from other listeners; a reload re-syncs.
       const playNext = () => {
-        const durations = tracks.map((t) => t.durationSec);
-        let np = nowPlaying(durations, Date.now())!;
+        let np = nowPlaying(tracks, Date.now())!;
         // A song that ends a moment before the clock does would otherwise play again
-        if (np.index === playingIndex) np = nowPlaying(durations, Date.now() + (durations[np.index] - np.offsetSec) * 1000 + 1)!;
+        if (np.index === playingIndex) np = nowPlaying(tracks, Date.now() + (tracks[np.index].durationSec - np.offsetSec) * 1000 + 1)!;
         playAt(np.index, 0);
       };
       if (!JINGLES.length || ++songsSinceJingle < JINGLE_EVERY || (document.hidden && !jingleReady)) return playNext();
@@ -244,7 +245,7 @@ export function RadioPlayer({ tracks, thanks }: { tracks: RadioTrack[]; thanks: 
     }
 
     function playScheduled() {
-      const np = nowPlaying(tracks.map((t) => t.durationSec), Date.now())!;
+      const np = nowPlaying(tracks, Date.now())!;
       playAt(np.index, Math.floor(np.offsetSec));
     }
     // ?cortinilla in the address plays a jingle right away instead of waiting for it, to try them out
@@ -321,7 +322,7 @@ export function RadioPlayer({ tracks, thanks }: { tracks: RadioTrack[]; thanks: 
         const api = await loadSpotifyApi();
         if (cancelled) return;
         setSource("spotify");
-        const first = nowPlaying(tracks.map((t) => t.durationSec), Date.now())!;
+        const first = nowPlaying(tracks, Date.now())!;
         api.createController(target, { uri: tracks[first.index].spotifyUri, width: "100%", height: 80, theme: "dark" }, (c) => {
           controller.current = { load: (t, startAt) => c.loadUri(t.spotifyUri, false, startAt), play: () => c.play(), destroy: () => c.destroy() };
           // The only signal the browser actually let us play; play() itself reports nothing

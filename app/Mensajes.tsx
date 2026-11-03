@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type CSSProperties, type FormEvent } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type FormEvent } from "react";
 import type { Message } from "@/lib/messages";
 import { useStored } from "./useStored";
 
@@ -25,10 +25,29 @@ export function Mensajes({ maxLength }: { maxLength: number }) {
   // The box to write one stays folded behind a button until someone wants it
   const [open, setOpen] = useState(false);
   const input = useRef<HTMLInputElement>(null);
+  // Clicking one lines them all up to be read; clicking again sets them adrift
+  const [listed, setListed] = useState(false);
+  const list = useRef<HTMLUListElement>(null);
+  const before = useRef(new Map<Element, DOMRect>());
 
   useEffect(() => {
     if (open) input.current?.focus();
   }, [open]);
+
+  // FLIP: each one glides from where it was to where the switch put it, instead of jumping
+  useLayoutEffect(() => {
+    const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    for (const [li, from] of before.current) {
+      const to = li.getBoundingClientRect();
+      if (!reduce) li.animate({ translate: [`${from.left - to.left}px ${from.top - to.top}px`, "0 0"] }, { duration: 600, easing: "ease-out" });
+    }
+    before.current.clear();
+  }, [listed]);
+
+  const toggleList = () => {
+    before.current = new Map([...(list.current?.children ?? [])].map((li) => [li, li.getBoundingClientRect()]));
+    setListed(!listed);
+  };
 
   useEffect(() => {
     const load = async () => {
@@ -61,7 +80,12 @@ export function Mensajes({ maxLength }: { maxLength: number }) {
   return (
     <>
       {!hidden && (
-        <ul aria-label="Mensajes de los oyentes" className="pointer-events-none absolute inset-0 overflow-hidden">
+        <ul
+          ref={list}
+          aria-label="Mensajes de los oyentes"
+          // Newest on top when listed, without reordering the DOM the floating positions hang on
+          className={`pointer-events-none absolute inset-0 overflow-hidden ${listed ? "flex flex-col-reverse items-start justify-center-safe gap-1 px-4 py-4 sm:px-8" : ""}`}
+        >
           {messages.map((m, i) => {
             const h = hash(m.id);
             // Each message crosses the hero along its own line, at its own angle, from well off
@@ -77,7 +101,7 @@ export function Mensajes({ maxLength }: { maxLength: number }) {
             return (
               <li
                 key={m.id}
-                className="mensaje absolute w-max font-mono text-xs uppercase text-accent sm:text-sm"
+                className={`${listed ? "" : "mensaje absolute"} w-max font-mono text-xs uppercase text-accent sm:text-sm`}
                 style={{
                   "--cx": `${cx}%`,
                   "--cy": `${cy}%`,
@@ -90,7 +114,9 @@ export function Mensajes({ maxLength }: { maxLength: number }) {
                   animationDelay: `-${(h >> 5) % (2 * duration)}s`,
                 } as CSSProperties}
               >
-                {m.text}
+                <button onClick={toggleList} aria-pressed={listed} className="pointer-events-auto cursor-pointer uppercase hover:text-white">
+                  {m.text}
+                </button>
               </li>
             );
           })}

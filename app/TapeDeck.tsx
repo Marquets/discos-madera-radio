@@ -79,8 +79,6 @@ function ReelDibu() {
     };
     const play = () => {
       if (timer) return;
-      // A mask still loading shows nothing, which would leave gaps in the gif
-      for (let i = 1; i <= DRAWINGS; i++) new Image().src = `/dibus/${String(i).padStart(2, "0")}.webp`;
       timer = setInterval(() => {
         // Going straight into the player's iframe never reports leaving, so check
         if (!hovered()) return stop();
@@ -106,7 +104,13 @@ function ReelDibu() {
   return (
     // Between the reels' rims (x 295 to 445), under the meter and over the tape head
     <foreignObject ref={spot} x="327.5" y="133.5" width="85" height="85">
-      <div className="dibu-bobinas" style={{ "--dibu": dibuUrl(n) } as React.CSSProperties} />
+      {/* All stacked and only one visible: swapping the mask's url revalidated it on every
+          frame (public/ is served with max-age=0) and it showed nothing meanwhile */}
+      <div className="grid h-full grid-rows-1">
+        {Array.from({ length: DRAWINGS }, (_, i) => (
+          <div key={i} className="dibu-bobinas col-start-1 row-start-1" style={{ "--dibu": dibuUrl(i + 1), visibility: i + 1 === n ? "visible" : "hidden" } as React.CSSProperties} />
+        ))}
+      </div>
     </foreignObject>
   );
 }

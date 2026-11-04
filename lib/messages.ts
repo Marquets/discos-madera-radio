@@ -6,11 +6,14 @@ export const MAX_LENGTH = 80;
 // Only the newest ones float: more than this and the hero turns into a wall of text
 export const KEEP = 30;
 export const COOLDOWN_MS = 60_000;
+export const MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 
 const KEY = "mensajes";
 
 // Locally there is no blob store and a single process, so memory will do (reset on restart)
 const local: { messages?: Message[] } = ((globalThis as { mensajes?: { messages?: Message[] } }).mensajes ??= {});
+
+const fresh = (messages: Message[]) => messages.filter((m) => Date.now() - Date.parse(m.at) < MAX_AGE_MS);
 
 /** Single line, no runs of spaces, cut to MAX_LENGTH; empty when nothing is left to show */
 export function clean(text: unknown) {
@@ -19,13 +22,13 @@ export function clean(text: unknown) {
 
 export async function readMessages(): Promise<Message[]> {
   const store = blobs();
-  if (!store) return local.messages ?? [];
-  return (await withinTimeout("mensajes read", 3000, store.get(KEY, { type: "json" }))) ?? [];
+  if (!store) return fresh(local.messages ?? []);
+  return fresh((await withinTimeout("mensajes read", 3000, store.get(KEY, { type: "json" }))) ?? []);
 }
 
 export async function addMessage(text: string) {
   const message: Message = { id: crypto.randomUUID(), text, at: new Date().toISOString() };
-  const withMessage = (messages: Message[]) => [...messages, message].slice(-KEEP);
+  const withMessage = (messages: Message[]) => [...fresh(messages), message].slice(-KEEP);
   const store = blobs();
   if (!store) return (local.messages = withMessage(local.messages ?? []));
   // Several people write at once; a conditional write turns a lost race into a retry, as in db.ts

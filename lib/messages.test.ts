@@ -1,6 +1,6 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { POST } from "../app/api/mensajes/route";
-import { KEEP, MAX_LENGTH, addMessage, clean, readMessages } from "./messages";
+import { KEEP, MAX_AGE_MS, MAX_LENGTH, addMessage, clean, readMessages } from "./messages";
 
 const post = (body: unknown, ip: string) =>
   POST(new Request("http://localhost/api/mensajes", { method: "POST", headers: { "x-forwarded-for": ip }, body: JSON.stringify(body) }));
@@ -17,6 +17,18 @@ describe("mensajes", () => {
     const messages = await readMessages();
     expect(messages).toHaveLength(KEEP);
     expect(messages.at(-1)!.text).toBe(`mensaje ${KEEP + 4}`);
+  });
+
+  it("drops messages older than a week", async () => {
+    vi.useFakeTimers();
+    try {
+      await addMessage("viejo");
+      vi.advanceTimersByTime(MAX_AGE_MS);
+      expect(await readMessages()).toEqual([]);
+      expect((await addMessage("nuevo")).map((m) => m.text)).toEqual(["nuevo"]);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("rejects empty messages and makes the same visitor wait", async () => {

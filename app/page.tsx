@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { MAX_LENGTH } from "@/lib/messages";
 import { getTracks } from "@/lib/sync";
 import { Mensajes } from "./Mensajes";
@@ -30,6 +31,11 @@ export default async function Home() {
         </div>
       )}
       <div className="px-4 pt-12 pb-16 sm:px-8">
+        {latest.length > 0 && (
+          <Link href="/archivo" className="mb-4 ml-auto block w-max text-sm uppercase decoration-2 underline-offset-4 hover:underline">
+            Ver el archivo →
+          </Link>
+        )}
         {latest.length ? <TrackGrid tracks={latest} /> : <p className="text-center uppercase">Aún no hay canciones.</p>}
       </div>
     </>

@@ -6,11 +6,12 @@ import { useEffect, useRef, useState } from "react";
 
 // The logo is already the way back to the front page
 const LINKS = [
-  { href: "/archivo", label: "Archivo" },
+  { href: "/artistas", label: "Artistas" },
   { href: "/programas", label: "Programas" },
   { href: "/live", label: "Live" },
   { href: "/madera-tools", label: "Madera Tools" },
-  // Deja tu píxel queda fuera del menú; la página sigue en pie y se llega por su URL
+  // Deja tu píxel queda fuera del menú; la página sigue en pie y se llega por su URL.
+  // El archivo, igual, pero se llega desde la portada
 ];
 
 /** Folded behind one button, so the hero only carries the logo; the links drop in one after another */

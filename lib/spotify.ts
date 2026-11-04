@@ -17,7 +17,7 @@ export const playlistTracks = () => (process.env.SPOTIFY_REFRESH_TOKEN ? apiTrac
 
 // The playlist items endpoint refuses app-only tokens, so it reads as the user who logged in once
 // and left SPOTIFY_REFRESH_TOKEN behind. Spotify may hand back a new refresh token; the old one keeps working.
-async function apiTracks(): Promise<PlaylistTrack[]> {
+export async function spotifyToken(): Promise<string> {
   const { SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, SPOTIFY_REFRESH_TOKEN } = process.env;
   const auth = await fetch("https://accounts.spotify.com/api/token", {
     method: "POST",
@@ -25,7 +25,11 @@ async function apiTracks(): Promise<PlaylistTrack[]> {
     body: new URLSearchParams({ grant_type: "refresh_token", refresh_token: SPOTIFY_REFRESH_TOKEN! }),
   });
   if (!auth.ok) throw new Error(`Spotify token ${auth.status}`);
-  const { access_token } = await auth.json();
+  return (await auth.json()).access_token;
+}
+
+async function apiTracks(): Promise<PlaylistTrack[]> {
+  const access_token = await spotifyToken();
 
   type Item = { added_at: string; added_by?: { id: string }; item: { type: string; id: string | null; name: string; uri: string; duration_ms: number; artists: { name: string }[] } | null };
   const items: Item[] = [];

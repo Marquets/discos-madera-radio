@@ -16,7 +16,9 @@ export type Track = {
   cover?: string;
   /** Plays the song on phones; null when YouTube had no match */
   youtubeId?: string | null;
-  /** When the radio first saw it in the playlist (Spotify's embed doesn't expose the real added date) */
+  /** Spotify user id of whoever added it, when the sync reads the Web API */
+  addedBy?: string;
+  /** When it was added to the playlist, or when the radio first saw it if the sync reads the embed */
   firstSeenAt: string;
 };
 

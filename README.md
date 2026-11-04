@@ -24,9 +24,10 @@ Ojo: en una función de Netlify el disco es de **solo lectura**, así que escrib
 
 ## A tener en cuenta
 
-- **100 canciones máximo**: el reproductor incrustable solo enseña las 100 primeras de la playlist. La radio es un espejo de la playlist: lo que quitas de Spotify deja de sonar en el siguiente sync, así que pasar de 100 obliga a leerla con la Web API.
-- **Fecha = cuándo la vio la radio**, no cuándo se añadió (Spotify no la expone sin API). La portada vuelve a mirar la playlist si ha pasado más de 1 min. Para un cron: `GET /api/sync` con `Authorization: Bearer $CRON_SECRET`.
+- **Con la Web API** (`SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET`, `SPOTIFY_REFRESH_TOKEN`): el sync lee la playlist entera, con la fecha en que se añadió cada canción y quién la añadió. Spotify solo da el id de usuario, así que los nombres de los agradecimientos van a mano en `data/contributors.json` (id → nombre, una línea por persona); quien no esté sale con su id.
+- **Sin la Web API**: el reproductor incrustable solo enseña las 100 primeras canciones, la fecha es cuándo las vio la radio y no hay agradecimientos.
+- La radio es un espejo de la playlist: lo que quitas de Spotify deja de sonar en el siguiente sync. La portada vuelve a mirar la playlist si ha pasado más de 1 min. Para un cron: `GET /api/sync` con `Authorization: Bearer $CRON_SECRET`.
 - **Previews de 30 s** para quien no tenga sesión de Spotify abierta en el navegador.
-- **No oficial**: si Spotify cambia su reproductor incrustable, la lectura de la playlist puede romperse.
+- **No oficial**: sin la Web API, si Spotify cambia su reproductor incrustable, la lectura de la playlist puede romperse.
 
 `npm test` ejecuta los tests.

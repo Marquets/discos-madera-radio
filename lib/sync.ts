@@ -21,10 +21,12 @@ export async function syncPlaylist() {
       const current = new Set(fresh.map((t) => t.id));
       db.tracks = db.tracks.filter((t) => current.has(t.id));
     }
+    const byId = new Map(fresh.map((t) => [t.id, t]));
+    for (const t of db.tracks) t.addedBy = byId.get(t.id)?.addedBy ?? t.addedBy;
     const known = new Set(db.tracks.map((t) => t.id));
-    for (const t of fresh) {
+    for (const { addedAt, ...t } of fresh) {
       if (known.has(t.id)) continue;
-      db.tracks.push({ ...t, firstSeenAt: now });
+      db.tracks.push({ ...t, firstSeenAt: addedAt ?? now });
       added++;
     }
     for (const t of db.tracks) if (VIDEO_OVERRIDES[t.id]) t.youtubeId = VIDEO_OVERRIDES[t.id];

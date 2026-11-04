@@ -1,19 +1,19 @@
-// Spotify's API needs Premium since February 2026, so who added what is read by hand
-// from the playlist page and kept here. It lives in the repo rather than the blob store
-// because it changes rarely and is curated, not written by the running site.
+// The Web API says who added each song only as a Spotify user id, and refuses to look up
+// the display name, so the names live here: one line per person, added by hand once.
 import contributors from "../data/contributors.json";
 
-const BY_ID: Record<string, { by: string } | undefined> = contributors;
+const NAMES: Record<string, string | undefined> = contributors;
 
 /**
  * Distinct names, most recent first. Whoever added the newest song leads, and a name
  * already shown is not repeated further down, so six songs by one person do not fill
- * the whole list. Falls back to the Spotify username when someone set no display name.
+ * the whole list. Falls back to the Spotify user id for someone not listed yet.
  */
-export function recentContributors(tracksOldestFirst: { id: string }[], limit = 5) {
+export function recentContributors(tracksOldestFirst: { addedBy?: string }[], limit = 5) {
   const names: string[] = [];
   for (let i = tracksOldestFirst.length - 1; i >= 0 && names.length < limit; i--) {
-    const name = BY_ID[tracksOldestFirst[i].id]?.by;
+    const id = tracksOldestFirst[i].addedBy;
+    const name = id && (NAMES[id] ?? id);
     if (name && !names.includes(name)) names.push(name);
   }
   return names;

@@ -1,4 +1,4 @@
-export const playlistUrl = () => `https://open.spotify.com/playlist/${process.env.SPOTIFY_PLAYLIST_ID}`;
+export const playlistUrl = () => process.env.SPOTIFY_PLAYLIST_INVITE_URL || `https://open.spotify.com/playlist/${process.env.SPOTIFY_PLAYLIST_ID}`;
 
 type EmbedTrack = { uri: string; title: string; subtitle: string; duration: number; entityType: string };
 

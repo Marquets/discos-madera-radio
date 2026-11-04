@@ -6,8 +6,8 @@ import { DRAWINGS } from "./CortinillaDibus";
 
 type DeckTrack = { id: string; title: string; artist: string; durationSec: number; firstSeenAt: string };
 
-// Discos Madera poster palette: orange on black
-const CREAM = "#f89028";
+// Discos Madera poster palette, from the theme colours in globals.css
+const CREAM = "var(--color-accent)";
 const TAPE = "#5a3410";
 const WIRE = "#8a5520";
 const HEAD_X = 368;
@@ -44,9 +44,9 @@ function Reel({ cx, tape, angle }: { cx: number; tape: number; angle: number }) 
         <line y1="-95" y2="-52" stroke={CREAM} strokeWidth="3" />
         <line y1="52" y2="95" stroke={CREAM} strokeWidth="3" />
         <circle r="50" fill={CREAM} />
-        <circle r="24" fill="#000" />
+        <circle r="24" fill="var(--color-black)" />
         {[0, 120, 240].map((a) => (
-          <rect key={a} x="-3" y="-32" width="6" height="12" fill="#000" transform={`rotate(${a})`} />
+          <rect key={a} x="-3" y="-32" width="6" height="12" fill="var(--color-black)" transform={`rotate(${a})`} />
         ))}
         <circle r="5" fill={CREAM} />
       </g>
@@ -140,8 +140,8 @@ export function TapeDeck({ tracks }: { tracks: DeckTrack[] }) {
 
         <polyline points={`${200 - 40},${160 + left * 0.9} 195,287 255,282 ${HEAD_X},272 480,282 540,287 ${540 + 40},${160 + right * 0.9}`} fill="none" stroke={WIRE} strokeWidth="2" />
         <circle cx="195" cy="287" r="7" fill={WIRE} />
-        <circle cx="255" cy="282" r="12" fill="#000" stroke={CREAM} strokeWidth="2.5" />
-        <circle cx="480" cy="282" r="12" fill="#000" stroke={CREAM} strokeWidth="2.5" />
+        <circle cx="255" cy="282" r="12" fill="var(--color-black)" stroke={CREAM} strokeWidth="2.5" />
+        <circle cx="480" cy="282" r="12" fill="var(--color-black)" stroke={CREAM} strokeWidth="2.5" />
         <circle cx="540" cy="287" r="7" fill={WIRE} />
         <rect x={HEAD_X - 17} y="260" width="34" height="28" fill={CREAM} />
         <ReelDibu />

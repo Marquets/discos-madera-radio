@@ -8,6 +8,7 @@ import { getTracks } from "@/lib/sync";
 import { CortinillaDibus } from "./CortinillaDibus";
 import { Logo } from "./Logo";
 import { NavLinks } from "./NavLinks";
+import { Nieve } from "./Nieve";
 import { RadioPlayer } from "./RadioPlayer";
 import "./globals.css";
 
@@ -22,7 +23,7 @@ export const metadata: Metadata = {
   icons: { apple: "/icons/icon-180.png" },
 };
 
-export const viewport: Viewport = { themeColor: "#000000" };
+export const viewport: Viewport = { themeColor: "#082a15" };
 
 async function OnAir() {
   const tracks = (await getTracks()).toSorted((a, b) => a.firstSeenAt.localeCompare(b.firstSeenAt));
@@ -51,6 +52,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         </div>
         <main>{children}</main>
         <CortinillaDibus />
+        <Nieve />
       </body>
     </html>
   );

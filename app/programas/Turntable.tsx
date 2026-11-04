@@ -1,5 +1,5 @@
-// Same orange-on-black palette as the tape deck on the front page
-const CREAM = "#f89028";
+// Same palette as the tape deck on the front page, from the theme colours
+const CREAM = "var(--color-accent)";
 const VINYL = "#5a3410";
 const WIRE = "#8a5520";
 const SPINDLE = { x: 160, y: 150 };
@@ -16,13 +16,13 @@ export function Turntable() {
         <g style={{ transformOrigin: `${SPINDLE.x}px ${SPINDLE.y}px` }} className="motion-safe:animate-[spin_1.8s_linear_infinite]">
           <circle cx={SPINDLE.x} cy={SPINDLE.y} r="118" fill={VINYL} />
           {[106, 92, 78, 64].map((r) => (
-            <circle key={r} cx={SPINDLE.x} cy={SPINDLE.y} r={r} fill="none" stroke="#000" strokeWidth="1.5" />
+            <circle key={r} cx={SPINDLE.x} cy={SPINDLE.y} r={r} fill="none" stroke="var(--color-black)" strokeWidth="1.5" />
           ))}
           {/* The shine is what shows the record turning; a plain disc looks still */}
           <path d={`M${SPINDLE.x - 98} ${SPINDLE.y - 40} A106 106 0 0 1 ${SPINDLE.x - 40} ${SPINDLE.y - 98}`} fill="none" stroke={WIRE} strokeWidth="5" strokeLinecap="round" />
           <circle cx={SPINDLE.x} cy={SPINDLE.y} r="40" fill={CREAM} />
         </g>
-        <circle cx={SPINDLE.x} cy={SPINDLE.y} r="4" fill="#000" />
+        <circle cx={SPINDLE.x} cy={SPINDLE.y} r="4" fill="var(--color-black)" />
 
         <rect x="321" y="22" width="18" height="20" fill={WIRE} />
         <circle cx="330" cy="62" r="20" fill="none" stroke={CREAM} strokeWidth="3" />

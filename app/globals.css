@@ -4,7 +4,11 @@
   --font-sans: var(--font-space-mono);
   --font-display: var(--font-anton);
   --font-mono: var(--font-space-mono);
-  --color-accent: #f89028;
+  /* Especial Navidad: el naranja pasa a rojo y el negro a verde pino. Sustituir
+     --color-black tiñe de verde todos los bg-black y text-black de la web. El rojo es
+     #b32428. Para volver a la paleta de siempre: #f89028 y quitar --color-black. */
+  --color-accent: #b32428;
+  --color-black: #082a15;
 }
 
 /* Alto del deslizante más la cabecera, que van encima del hero dentro de la banda
@@ -49,7 +53,7 @@
    baja ahí, así que --chrome es solo el deslizante y la cabecera, para que el vídeo crezca
    todo lo que cabe en la pantalla. */
 body:has(:not([style*="display: none"]) > #live) {
-  background: black;
+  background: var(--color-black);
   --chrome: 9.5rem;
 
   @media (min-width: 640px) {

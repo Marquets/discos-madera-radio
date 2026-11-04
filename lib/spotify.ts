@@ -1,4 +1,11 @@
-export const playlistUrl = () => process.env.SPOTIFY_PLAYLIST_INVITE_URL || `https://open.spotify.com/playlist/${process.env.SPOTIFY_PLAYLIST_ID}`;
+// Especial Navidad: this branch plays its own playlist, from its own variables, and leaves the
+// usual ones for main. Without SPOTIFY_PLAYLIST_ID_NAVIDAD (say, locally) it falls back to the
+// usual playlist; the songs are stored apart anyway (lib/db.ts), so that's harmless.
+const playlistId = () => process.env.SPOTIFY_PLAYLIST_ID_NAVIDAD || process.env.SPOTIFY_PLAYLIST_ID;
+// The usual invite would let people add songs to the wrong playlist, so it's never used here
+const inviteUrl = () => (process.env.SPOTIFY_PLAYLIST_ID_NAVIDAD ? process.env.SPOTIFY_PLAYLIST_INVITE_URL_NAVIDAD : process.env.SPOTIFY_PLAYLIST_INVITE_URL);
+
+export const playlistUrl = () => inviteUrl() || `https://open.spotify.com/playlist/${playlistId()}`;
 
 type EmbedTrack = { uri: string; title: string; subtitle: string; duration: number; entityType: string };
 
@@ -33,7 +40,7 @@ async function apiTracks(): Promise<PlaylistTrack[]> {
 
   type Item = { added_at: string; added_by?: { id: string }; item: { type: string; id: string | null; name: string; uri: string; duration_ms: number; artists: { name: string }[] } | null };
   const items: Item[] = [];
-  for (let url: string | null = `https://api.spotify.com/v1/playlists/${process.env.SPOTIFY_PLAYLIST_ID}/items?limit=50`; url; ) {
+  for (let url: string | null = `https://api.spotify.com/v1/playlists/${playlistId()}/items?limit=50`; url; ) {
     const res = await fetch(url, { headers: { Authorization: `Bearer ${access_token}` } });
     if (!res.ok) throw new Error(`Spotify playlist ${res.status}`);
     const page: { items: Item[]; next: string | null } = await res.json();
@@ -52,7 +59,7 @@ async function apiTracks(): Promise<PlaylistTrack[]> {
 // shortcut: reads Spotify's public embed page, so it works without the Web API keys. It's unofficial, may break
 // if Spotify changes that page, and only lists the first 100 songs; set the SPOTIFY_* keys to use the API instead.
 async function embedTracks(): Promise<PlaylistTrack[]> {
-  const res = await fetch(`https://open.spotify.com/embed/playlist/${process.env.SPOTIFY_PLAYLIST_ID}`, {
+  const res = await fetch(`https://open.spotify.com/embed/playlist/${playlistId()}`, {
     headers: { "User-Agent": "Mozilla/5.0" },
   });
   if (!res.ok) throw new Error(`Spotify embed ${res.status}`);

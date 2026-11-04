@@ -24,3 +24,6 @@ yarn-error.log*
 
 # OJO: data/db.json SI va al repo. Es la semilla del store de Netlify Blobs
 # en el primer despliegue, no un fichero generado.
+
+# La de Navidad no: se genera sola al sincronizar (lib/db.ts)
+data/db-navidad.json

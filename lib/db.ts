@@ -1,11 +1,6 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { getStore, type Store } from "@netlify/blobs";
-// Imported rather than read from disk: a path built at runtime is invisible to
-// Next's dependency tracing, so the file would be missing from the deployed
-// function. Without it readDb finds no lastSyncAt and syncPlaylist runs inline,
-// which times the request out.
-import seed from "../data/db.json";
 
 export type Track = {
   id: string;
@@ -24,9 +19,14 @@ export type Track = {
 
 type Db = { lastSyncAt?: string; tracks: Track[] };
 
-const KEY = "db";
-const FILE = path.join(process.cwd(), "data", "db.json");
-const SEED = seed as Db;
+// Especial Navidad: the Christmas playlist keeps its songs apart from the usual ones. The
+// blob store is shared by every deploy of the site, and the sync drops whatever isn't in the
+// playlist it reads, so sharing the "db" key would wipe main's archive. It starts empty
+// rather than from data/db.json, which holds the usual playlist. The old lastSyncAt makes the
+// first visit sync after responding: syncing inline (no lastSyncAt) times the request out.
+const KEY = "db-navidad";
+const FILE = path.join(process.cwd(), "data", "db-navidad.json");
+const SEED: Db = { lastSyncAt: new Date(0).toISOString(), tracks: [] };
 
 /**
  * Netlify injects the Blobs context into deployed functions, where the filesystem is read-only.
@@ -103,8 +103,8 @@ export async function updateDb(mutate: (db: Db) => void): Promise<Db> {
   // rather than a dropped song. `modified: false` means someone else wrote first.
   for (let attempt = 0; attempt < 3; attempt++) {
     const current = await withinTimeout("read for update", 3000, store.getWithMetadata(KEY, { type: "json" }));
-    // structuredClone so a mutation never leaks into the imported seed, which is
-    // module state shared by every request this instance serves
+    // structuredClone so a mutation never leaks into the seed, which is module state
+    // shared by every request this instance serves
     const db: Db = current?.data ?? structuredClone(SEED);
     mutate(db);
     const write = await withinTimeout("write", 5000, store.setJSON(KEY, db, current?.etag ? { onlyIfMatch: current.etag } : { onlyIfNew: true }));

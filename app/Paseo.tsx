@@ -303,8 +303,7 @@ export function Paseo() {
   return (
     // Tall enough for the lady and what they say above them
     <div ref={ref} aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-64 overflow-hidden">
-      {/* eslint-disable-next-line @next/next/no-img-element -- moved every frame by hand, nothing for next/image to do */}
-      <img data-snail src="/dibus/caracol.svg" alt="" width={SNAIL.width} height={SNAIL.height} hidden className="pointer-events-auto absolute bottom-0 left-0 origin-bottom cursor-pointer" />
+      <div data-snail hidden className="caracol pointer-events-auto absolute bottom-0 left-0 origin-bottom cursor-pointer" style={{ width: SNAIL.width, height: SNAIL.height }} />
       <div data-lady hidden className="taxi pointer-events-auto absolute bottom-0 left-0 origin-bottom cursor-pointer" style={{ width: LADY.width, height: LADY.height }} />
     </div>
   );

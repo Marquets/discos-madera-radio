@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { useCadena } from "./useCadena";
 
 const PER_PX = 1 / 9000; // flakes per square pixel of window: about 230 on a laptop screen
 const MAX_FLAKES = 400;
@@ -8,16 +9,19 @@ const MAX_FLAKES = 400;
 type Flake = { x: number; y: number; r: number; fall: number; sway: number; phase: number; alpha: number };
 
 /**
- * Especial Navidad: snow falling over the whole site. A fixed canvas that lets clicks
+ * Snow falling over the whole site, on the channels that have it (`en`, by id). A fixed canvas that lets clicks
  * through, under the player, the menu and the jingle drawings so it never covers them.
  * Bigger flakes fall faster and are brighter, so it reads as depth.
  */
-export function Nieve() {
+export function Nieve({ en }: { en: string[] }) {
   const ref = useRef<HTMLCanvasElement>(null);
+  const cadena = useCadena();
+  const nieva = cadena !== null && en.includes(cadena);
 
   useEffect(() => {
     const canvas = ref.current;
     const ctx = canvas?.getContext("2d");
+    if (!nieva) return;
     if (!canvas || !ctx || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
     let w = 0;
@@ -76,7 +80,8 @@ export function Nieve() {
       cancelAnimationFrame(frame);
       removeEventListener("resize", resize);
     };
-  }, []);
+  }, [nieva]);
 
+  if (!nieva) return null;
   return <canvas ref={ref} aria-hidden className="pointer-events-none fixed inset-0 z-[5] h-full w-full" />;
 }

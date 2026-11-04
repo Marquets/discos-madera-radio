@@ -1,12 +1,3 @@
-// Especial Navidad: this branch plays its own playlist, from its own variables, and leaves the
-// usual ones for main. Without SPOTIFY_PLAYLIST_ID_NAVIDAD (say, locally) it falls back to the
-// usual playlist; the songs are stored apart anyway (lib/db.ts), so that's harmless.
-const playlistId = () => process.env.SPOTIFY_PLAYLIST_ID_NAVIDAD || process.env.SPOTIFY_PLAYLIST_ID;
-// The usual invite would let people add songs to the wrong playlist, so it's never used here
-const inviteUrl = () => (process.env.SPOTIFY_PLAYLIST_ID_NAVIDAD ? process.env.SPOTIFY_PLAYLIST_INVITE_URL_NAVIDAD : process.env.SPOTIFY_PLAYLIST_INVITE_URL);
-
-export const playlistUrl = () => inviteUrl() || `https://open.spotify.com/playlist/${playlistId()}`;
-
 type EmbedTrack = { uri: string; title: string; subtitle: string; duration: number; entityType: string };
 
 export type PlaylistTrack = {
@@ -20,7 +11,7 @@ export type PlaylistTrack = {
   addedAt?: string;
 };
 
-export const playlistTracks = () => (process.env.SPOTIFY_REFRESH_TOKEN ? apiTracks() : embedTracks());
+export const playlistTracks = (playlistId: string) => (process.env.SPOTIFY_REFRESH_TOKEN ? apiTracks(playlistId) : embedTracks(playlistId));
 
 // The playlist items endpoint refuses app-only tokens, so it reads as the user who logged in once
 // and left SPOTIFY_REFRESH_TOKEN behind. Spotify may hand back a new refresh token; the old one keeps working.
@@ -35,12 +26,12 @@ export async function spotifyToken(): Promise<string> {
   return (await auth.json()).access_token;
 }
 
-async function apiTracks(): Promise<PlaylistTrack[]> {
+async function apiTracks(playlistId: string): Promise<PlaylistTrack[]> {
   const access_token = await spotifyToken();
 
   type Item = { added_at: string; added_by?: { id: string }; item: { type: string; id: string | null; name: string; uri: string; duration_ms: number; artists: { name: string }[] } | null };
   const items: Item[] = [];
-  for (let url: string | null = `https://api.spotify.com/v1/playlists/${playlistId()}/items?limit=50`; url; ) {
+  for (let url: string | null = `https://api.spotify.com/v1/playlists/${playlistId}/items?limit=50`; url; ) {
     const res = await fetch(url, { headers: { Authorization: `Bearer ${access_token}` } });
     if (!res.ok) throw new Error(`Spotify playlist ${res.status}`);
     const page: { items: Item[]; next: string | null } = await res.json();
@@ -58,8 +49,8 @@ async function apiTracks(): Promise<PlaylistTrack[]> {
 
 // shortcut: reads Spotify's public embed page, so it works without the Web API keys. It's unofficial, may break
 // if Spotify changes that page, and only lists the first 100 songs; set the SPOTIFY_* keys to use the API instead.
-async function embedTracks(): Promise<PlaylistTrack[]> {
-  const res = await fetch(`https://open.spotify.com/embed/playlist/${playlistId()}`, {
+async function embedTracks(playlistId: string): Promise<PlaylistTrack[]> {
+  const res = await fetch(`https://open.spotify.com/embed/playlist/${playlistId}`, {
     headers: { "User-Agent": "Mozilla/5.0" },
   });
   if (!res.ok) throw new Error(`Spotify embed ${res.status}`);

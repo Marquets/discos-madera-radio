@@ -1,6 +1,12 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { getStore, type Store } from "@netlify/blobs";
+// Imported rather than read from disk: a path built at runtime is invisible to
+// Next's dependency tracing, so the file would be missing from the deployed
+// function. Without it readDb finds no lastSyncAt and syncPlaylist runs inline,
+// which times the request out.
+import seed from "../data/db.json";
+import type { Cadena } from "./cadenas";
 
 export type Track = {
   id: string;
@@ -19,14 +25,17 @@ export type Track = {
 
 type Db = { lastSyncAt?: string; tracks: Track[] };
 
-// Especial Navidad: the Christmas playlist keeps its songs apart from the usual ones. The
-// blob store is shared by every deploy of the site, and the sync drops whatever isn't in the
-// playlist it reads, so sharing the "db" key would wipe main's archive. It starts empty
-// rather than from data/db.json, which holds the usual playlist. The old lastSyncAt makes the
-// first visit sync after responding: syncing inline (no lastSyncAt) times the request out.
-const KEY = "db-navidad";
-const FILE = path.join(process.cwd(), "data", "db-navidad.json");
-const SEED: Db = { lastSyncAt: new Date(0).toISOString(), tracks: [] };
+type Key = Cadena["dbKey"];
+
+const file = (key: Key) => path.join(process.cwd(), "data", `${key}.json`);
+
+/**
+ * Each channel's songs live under their own key: the blob store is shared by every deploy, and
+ * a sync drops whatever isn't in its playlist, so two channels on one key would wipe each other.
+ * Only the usual one starts from data/db.json, which holds its songs. The others start empty,
+ * with an old lastSyncAt so their first visit syncs after responding, not inline.
+ */
+const seedFor = (key: Key): Db => (key === "db" ? (seed as Db) : { lastSyncAt: new Date(0).toISOString(), tracks: [] });
 
 /**
  * Netlify injects the Blobs context into deployed functions, where the filesystem is read-only.
@@ -64,50 +73,50 @@ export async function withinTimeout<T>(what: string, ms: number, work: Promise<T
   }
 }
 
-async function readFileDb(): Promise<Db> {
+async function readFileDb(key: Key): Promise<Db> {
   try {
-    return JSON.parse(await readFile(FILE, "utf8"));
+    return JSON.parse(await readFile(file(key), "utf8"));
   } catch (e) {
     if ((e as NodeJS.ErrnoException).code === "ENOENT") return { tracks: [] };
     throw e;
   }
 }
 
-export async function readDb(): Promise<Db> {
+export async function readDb(key: Key): Promise<Db> {
   const store = blobs();
-  if (!store) return readFileDb();
+  if (!store) return readFileDb(key);
   // On the first deploy the blob is empty, so start from the db.json committed in the repo
-  return (await withinTimeout("read", 3000, store.get(KEY, { type: "json" }))) ?? SEED;
+  return (await withinTimeout("read", 3000, store.get(key, { type: "json" }))) ?? seedFor(key);
 }
 
 // Only one local server writes the file, so an in-process lock is enough there
 let lock: Promise<unknown> = Promise.resolve();
 
-function updateFileDb(mutate: (db: Db) => void): Promise<Db> {
+function updateFileDb(key: Key, mutate: (db: Db) => void): Promise<Db> {
   const next = lock.then(async () => {
-    const db = await readFileDb();
+    const db = await readFileDb(key);
     mutate(db);
-    await mkdir(path.dirname(FILE), { recursive: true });
-    await writeFile(FILE, JSON.stringify(db, null, 2));
+    await mkdir(path.dirname(file(key)), { recursive: true });
+    await writeFile(file(key), JSON.stringify(db, null, 2));
     return db;
   });
   lock = next.catch(() => {});
   return next;
 }
 
-export async function updateDb(mutate: (db: Db) => void): Promise<Db> {
+export async function updateDb(key: Key, mutate: (db: Db) => void): Promise<Db> {
   const store = blobs();
-  if (!store) return updateFileDb(mutate);
+  if (!store) return updateFileDb(key, mutate);
 
   // Several instances can sync at once; a conditional write turns a lost race into a retry
   // rather than a dropped song. `modified: false` means someone else wrote first.
   for (let attempt = 0; attempt < 3; attempt++) {
-    const current = await withinTimeout("read for update", 3000, store.getWithMetadata(KEY, { type: "json" }));
-    // structuredClone so a mutation never leaks into the seed, which is module state
-    // shared by every request this instance serves
-    const db: Db = current?.data ?? structuredClone(SEED);
+    const current = await withinTimeout("read for update", 3000, store.getWithMetadata(key, { type: "json" }));
+    // structuredClone so a mutation never leaks into the imported seed, which is
+    // module state shared by every request this instance serves
+    const db: Db = current?.data ?? structuredClone(seedFor(key));
     mutate(db);
-    const write = await withinTimeout("write", 5000, store.setJSON(KEY, db, current?.etag ? { onlyIfMatch: current.etag } : { onlyIfNew: true }));
+    const write = await withinTimeout("write", 5000, store.setJSON(key, db, current?.etag ? { onlyIfMatch: current.etag } : { onlyIfNew: true }));
     if (write === null) return db;
     if (write.modified) return db;
   }

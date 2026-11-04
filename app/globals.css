@@ -4,9 +4,18 @@
   --font-sans: var(--font-space-mono);
   --font-display: var(--font-anton);
   --font-mono: var(--font-space-mono);
-  /* Especial Navidad: el naranja pasa a rojo y el negro a verde pino. Sustituir
-     --color-black tiñe de verde todos los bg-black y text-black de la web. El rojo es
-     #b32428. Para volver a la paleta de siempre: #f89028 y quitar --color-black. */
+}
+
+/* Los colores van fuera del inline para que las clases (bg-accent, text-black…) lean la
+   variable en vez de llevar el valor dentro. Así cada cadena cambia la web entera con solo
+   redefinir las variables. */
+@theme {
+  --color-accent: #f89028;
+}
+
+/* Cadenas (lib/cadenas.ts): el script del layout pone data-cadena en <html> antes de pintar.
+   Redefinir --color-black tiñe todos los bg-black y text-black. */
+[data-cadena="navidad"] {
   --color-accent: #b32428;
   --color-black: #082a15;
 }
@@ -450,6 +459,13 @@ html[data-cortinilla] header a[href="/"] {
   }
 }
 
+
+/* El caracol (Paseo.tsx): el dibujo hace de máscara, como la señora, para que tome el color
+   de la cadena en vez del naranja que lleva dentro el SVG */
+.caracol {
+  background: var(--color-accent);
+  mask: url(/dibus/caracol.svg) center / contain no-repeat;
+}
 
 /* La señora del taxi (Paseo.tsx): sus once fotogramas van en una tira que hace de máscara
    sobre el naranja; --frame (de 0 a 1) dice qué trozo se ve */

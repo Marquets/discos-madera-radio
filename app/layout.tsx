@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   description: "La música que vamos descubriendo, sonando en directo",
   // iOS ignores the manifest's icons and name, so they go here too
   appleWebApp: { title: "Discos Madera", statusBarStyle: "black" },
-  icons: { apple: "/icons/icon-180.png" },
+  icons: { icon: "/icon.png", apple: "/icons/icon-180.png" },
 };
 
 export const viewport: Viewport = { themeColor: "#000000" };

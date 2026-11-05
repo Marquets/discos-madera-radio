@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CADENAS, elegirCadena, hoyEnMadrid } from "./cadenas";
+import { abiertas, CADENAS, elegirCadena, hoyEnMadrid } from "./cadenas";
 
 describe("elegirCadena", () => {
   it("keeps the channel the visitor picked", () => {
@@ -16,6 +16,24 @@ describe("elegirCadena", () => {
     const soloNormal = CADENAS.filter((c) => c.id === "normal");
     expect(elegirCadena("navidad", soloNormal, "12-25")).toBe("normal");
     expect(elegirCadena("borrada", CADENAS, "07-15")).toBe("normal");
+  });
+});
+
+describe("abiertas", () => {
+  const ids = (hoy: string, ver: boolean) => abiertas(CADENAS, hoy, ver).map((c) => c.id);
+
+  it("opens Christmas only in its season, so out of it the switch stays hidden", () => {
+    for (const hoy of ["12-01", "12-25", "01-06"]) expect(ids(hoy, false)).toEqual(["normal", "navidad"]);
+    for (const hoy of ["11-30", "01-07", "07-15"]) expect(ids(hoy, false)).toEqual(["normal"]);
+  });
+
+  it("opens every channel with the preview cookie, without making Christmas the default", () => {
+    expect(ids("11-05", true)).toEqual(["normal", "navidad"]);
+    expect(elegirCadena(undefined, abiertas(CADENAS, "11-05", true), "11-05")).toBe("normal");
+  });
+
+  it("drops an old Christmas pick once the season is over", () => {
+    expect(elegirCadena("navidad", abiertas(CADENAS, "02-01", false), "02-01")).toBe("normal");
   });
 });
 

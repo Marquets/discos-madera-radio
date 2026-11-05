@@ -7,7 +7,7 @@ import { COOKIE } from "@/lib/cadenas";
 // paint, so every component reads the same value and the colours never flash.
 const subscribe = (onChange: () => void) => {
   const watch = new MutationObserver(onChange);
-  watch.observe(document.documentElement, { attributes: true, attributeFilter: ["data-cadena"] });
+  watch.observe(document.documentElement, { attributes: true, attributeFilter: ["data-cadena", "data-cambia"] });
   return () => watch.disconnect();
 };
 
@@ -17,6 +17,14 @@ export const useCadena = () =>
     subscribe,
     () => document.documentElement.dataset.cadena ?? null,
     () => null,
+  );
+
+/** Whether today there's more than one channel to pick from (data-cambia, set by the same script) */
+export const useCambia = () =>
+  useSyncExternalStore(
+    subscribe,
+    () => "cambia" in document.documentElement.dataset,
+    () => false,
   );
 
 /** Remembers the pick for a year and repaints at once; the songs follow with a router refresh */

@@ -27,6 +27,9 @@ export type CadenaId = (typeof CADENAS)[number]["id"];
 
 export const COOKIE = "cadena";
 
+/** Set by visiting any page with ?cadenas=ver (cleared with ?cadenas=no): opens every channel out of season */
+export const COOKIE_VER = "ver-cadenas";
+
 /** What a channel needs in the browser: no env, so the server hands this list down */
 export type CadenaPublica = Pick<Cadena, "id" | "nombre" | "temporada" | "nieve" | "themeColor">;
 
@@ -45,6 +48,19 @@ export function elegirCadena(elegida: string | undefined, cadenas: readonly Cade
     return desde <= hasta ? desde <= hoy && hoy <= hasta : hoy >= desde || hoy <= hasta;
   });
   return (enTemporada ?? cadenas[0]).id;
+}
+
+/**
+ * The channels a visitor can pick today: the ones without a season, plus the seasonal ones while
+ * in season, or always for whoever has the preview cookie. Self-contained for the same reason
+ * as elegirCadena: layout.tsx inlines it too.
+ */
+export function abiertas<C extends CadenaPublica>(cadenas: readonly C[], hoy: string, ver: boolean): C[] {
+  return cadenas.filter((c) => {
+    if (!c.temporada || ver) return true;
+    const [desde, hasta] = c.temporada;
+    return desde <= hasta ? desde <= hoy && hoy <= hasta : hoy >= desde || hoy <= hasta;
+  });
 }
 
 /** Today in Spain as MM-DD, the format of a channel's season */

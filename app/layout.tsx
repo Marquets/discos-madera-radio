@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Anton, Space_Mono } from "next/font/google";
 import Link from "next/link";
 import { Suspense } from "react";
-import { COOKIE, elegirCadena } from "@/lib/cadenas";
+import { abiertas, COOKIE, COOKIE_VER, elegirCadena } from "@/lib/cadenas";
 import { enAntena, publicas } from "@/lib/cadenas-server";
 import { recentContributors } from "@/lib/contributors";
 import { getTracks } from "@/lib/sync";
@@ -41,7 +41,8 @@ async function OnAir() {
  */
 function PintaCadena() {
   const cadenas = publicas();
-  const html = `{var m=document.cookie.match(/(?:^|; )${COOKIE}=([^;]*)/);document.documentElement.dataset.cadena=(${elegirCadena.toString()})(m?decodeURIComponent(m[1]):undefined,${JSON.stringify(cadenas)},new Intl.DateTimeFormat("en-CA",{timeZone:"Europe/Madrid",month:"2-digit",day:"2-digit"}).format(new Date()))}`;
+  // ?cadenas=ver / ?cadenas=no turn the preview cookie on and off; data-cambia shows the switch
+  const html = `{var d=document.documentElement,q=location.search.match(/[?&]cadenas=(ver|no)\\b/);if(q)document.cookie="${COOKIE_VER}="+(q[1]==="ver"?"1; max-age=31536000":"; max-age=0")+"; path=/; samesite=lax";var hoy=new Intl.DateTimeFormat("en-CA",{timeZone:"Europe/Madrid",month:"2-digit",day:"2-digit"}).format(new Date()),a=(${abiertas.toString()})(${JSON.stringify(cadenas)},hoy,/(?:^|; )${COOKIE_VER}=/.test(document.cookie)),m=document.cookie.match(/(?:^|; )${COOKIE}=([^;]*)/);d.dataset.cadena=(${elegirCadena.toString()})(m?decodeURIComponent(m[1]):undefined,a,hoy);if(a.length>1)d.dataset.cambia="";else delete d.dataset.cambia}`;
   return <script type={typeof window === "undefined" ? "text/javascript" : "text/plain"} suppressHydrationWarning dangerouslySetInnerHTML={{ __html: html }} />;
 }
 

@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import type { CadenaPublica } from "@/lib/cadenas";
 import { CambiaCadena } from "./CambiaCadena";
-import { useCadena } from "./useCadena";
+import { useCadena, useCambia } from "./useCadena";
 
 // The logo is already the way back to the front page
 const LINKS = [
@@ -22,6 +22,7 @@ export function NavLinks({ playlists, cadenas }: { playlists: Record<string, str
   const pathname = usePathname();
   // The playlist of the channel on air; the first one until the browser says which
   const playlist = playlists[useCadena() ?? ""] ?? Object.values(playlists)[0];
+  const cambia = useCambia();
   const [open, setOpen] = useState(false);
   const nav = useRef<HTMLElement>(null);
 
@@ -81,7 +82,7 @@ export function NavLinks({ playlists, cadenas }: { playlists: Record<string, str
           </a>
         </li>
         {/* On a phone the channel switch has no room beside the logo, so it comes in here */}
-        {cadenas.length > 1 && (
+        {cambia && (
           <li
             style={{ transitionDelay: open ? `${(LINKS.length + 1) * 70}ms` : "0ms" }}
             className={`mt-4 transition-[opacity,translate] duration-300 ease-out motion-reduce:transition-none sm:hidden ${open ? "translate-y-0 opacity-100" : "-translate-y-3 opacity-0"}`}

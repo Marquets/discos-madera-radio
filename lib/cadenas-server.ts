@@ -1,5 +1,5 @@
 import { cookies } from "next/headers";
-import { CADENAS, COOKIE, elegirCadena, hoyEnMadrid, type Cadena, type CadenaId, type CadenaPublica } from "./cadenas";
+import { abiertas, CADENAS, COOKIE, COOKIE_VER, elegirCadena, hoyEnMadrid, type Cadena, type CadenaId, type CadenaPublica } from "./cadenas";
 
 /** Each channel's playlist and invite, from the environment. A channel without a playlist is off air. */
 const PLAYLISTS: Record<CadenaId, { id?: string; invite?: string }> = {
@@ -21,7 +21,9 @@ export const publicas = (): CadenaPublica[] => enAntena().map(({ id, nombre, tem
 
 /** The channel this request plays, by the same rule the browser's inline script uses for the colours */
 export async function cadenaActual(): Promise<CadenaEnAntena> {
-  const cadenas = enAntena();
-  const id = elegirCadena((await cookies()).get(COOKIE)?.value, cadenas, hoyEnMadrid());
+  const jar = await cookies();
+  const hoy = hoyEnMadrid();
+  const cadenas = abiertas(enAntena(), hoy, jar.has(COOKIE_VER));
+  const id = elegirCadena(jar.get(COOKIE)?.value, cadenas, hoy);
   return cadenas.find((c) => c.id === id)!;
 }

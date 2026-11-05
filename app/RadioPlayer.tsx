@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import type { Energy } from "@/lib/franjas";
 import { JINGLE_EVERY, JINGLES } from "@/lib/jingles";
 import { nowPlaying } from "@/lib/schedule";
 import { useStored } from "./useStored";
@@ -16,6 +17,8 @@ export type RadioTrack = {
   durationSec: number;
   // When the radio first saw it, so new songs come up more often; live sets have none
   firstSeenAt?: string;
+  energy?: Energy | null;
+  nocturna?: boolean;
 };
 
 // position and duration in ms; title only from YouTube, the video's own

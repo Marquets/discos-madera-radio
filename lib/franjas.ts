@@ -3,16 +3,31 @@
 //   mañana    8–13  tranquila, media
 //   tarde     13–20 todas
 //   noche     20–24 media, animada
-// A song left out of this list plays in every slot, so new ones sound from the start.
+// A song left out of this list takes the energy measured at sync (energyFrom, below); one with
+// neither plays in every slot, so new ones sound from the start.
 // Spotify track id (open.spotify.com/track/<THIS>) → energy.
 export type Energy = "tranquila" | "media" | "animada";
 
-export const SLOTS: { from: number; name: string; plays: Energy[] }[] = [
-  { from: 0, name: "madrugada", plays: ["tranquila"] },
+// `nocturnas`: the slots where a nocturnal song (measured very acoustic and instrumental, like
+// a jazz pianist) also plays whatever its energy, NOCTURNA_BOOST times likelier
+export const SLOTS: { from: number; name: string; plays: Energy[]; nocturnas?: true }[] = [
+  { from: 0, name: "madrugada", plays: ["tranquila"], nocturnas: true },
   { from: 8, name: "mañana", plays: ["tranquila", "media"] },
   { from: 13, name: "tarde", plays: ["tranquila", "media", "animada"] },
-  { from: 20, name: "noche", plays: ["media", "animada"] },
+  { from: 20, name: "noche", plays: ["media", "animada"], nocturnas: true },
 ];
+
+export const NOCTURNA_BOOST = 3;
+
+/** ReccoBeats' 0–1 measures; at these the list's piano trios, Keith Jarrett and Aphex Twin's piano qualify */
+export const esNocturna = (acousticness: number, instrumentalness: number) => acousticness >= 0.7 && instrumentalness >= 0.6;
+
+/**
+ * A song this list doesn't have gets its energy at sync from ReccoBeats (lib/reccobeats.ts), a
+ * 0–1 measure. Cut where the hand labels split: they put the calm ones under 0.32 and the lively
+ * ones over 0.43.
+ */
+export const energyFrom = (value: number): Energy => (value < 0.3 ? "tranquila" : value < 0.5 ? "media" : "animada");
 
 export const ENERGY: Record<string, Energy> = {
   "29obLp4cP6PZhjMFujRQsh": "media", // dizzy — strongboi
@@ -67,4 +82,18 @@ export const ENERGY: Record<string, Energy> = {
   "5GWCndQ8ykzf6rYRvwrFcj": "media", // Anyone Who Knows What Love Is — Irma Thomas
   "0QMHVTnrFTQJoaqmkdsKhT": "animada", // I Wish — Skee-Lo
   "5RN42ghX3LURrittZmBjVD": "animada", // Beef Jerky — Cibo Matto
+  "6lOCXWGSrd9rCOt3ziKlJk": "media", // I Know You Are (But What Am I Thinking) — @
+  "2PTJGyZ11tvpfDUUp2enxD": "media", // Qué Hay Más Grande Que Este Amor — Teo Planell
+  "7xr7JJgZXewQsgXfi2LGyN": "animada", // girasol — kiut
+  "4z1doFJLo8ffJTVG2czdd8": "tranquila", // Castles in the Moon — Discovery Zone, World Brain
+  "1NiAMp0CzUdG6e97VYRB1a": "media", // In the Aeroplane Over the Sea — Neutral Milk Hotel
+  "4xvymaQlVKpZJPovvIAdEv": "tranquila", // Cuando Tenga La Tierra — Mercedes Sosa
+  "02L2ToEPbzl14ovAtppyhr": "tranquila", // Prudência — Tim Bernardes
+  "2JENu7srINnXlZC6JtLyEA": "animada", // 100 Horses — Geese
+  "21WxuXTk0HS0X4fcyXcnGC": "media", // La Camita — Traffic Sound
+  "7M8ufi5rmgnWpJfPidV4g8": "media", // Baile de Máscaras (Recarnaval) — Bala Desejo
+  "0i2of25fBIVGJvgcZQWUaM": "animada", // KOL 7AGA OK — Double Zuksh
+  // Navidad
+  "6VTbbVjKOC2qWagIDbkJrC": "media", // My Baby Just Cares for Me — Nina Simone
+  "7rcfs2bBj5mNyiJbBIQ7cc": "tranquila", // Cry Me A River — Julie London
 };

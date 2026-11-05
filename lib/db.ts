@@ -7,6 +7,7 @@ import { getStore, type Store } from "@netlify/blobs";
 // which times the request out.
 import seed from "../data/db.json";
 import type { Cadena } from "./cadenas";
+import type { Energy } from "./franjas";
 
 export type Track = {
   id: string;
@@ -21,6 +22,10 @@ export type Track = {
   addedBy?: string;
   /** When it was added to the playlist, or when the radio first saw it if the sync reads the embed */
   firstSeenAt: string;
+  /** Measured at sync, for the time slots; null when ReccoBeats doesn't know it. ENERGY in franjas.ts wins */
+  energy?: Energy | null;
+  /** Measured very acoustic and instrumental, so it also plays at night (franjas.ts); undefined until measured */
+  nocturna?: boolean;
 };
 
 type Db = { lastSyncAt?: string; tracks: Track[] };

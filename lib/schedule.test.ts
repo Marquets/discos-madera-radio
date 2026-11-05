@@ -61,6 +61,22 @@ describe("nowPlaying", () => {
     expect([...hours].some((h) => h >= 20)).toBe(true);
   });
 
+  it("keeps a song measured lively out of the small hours, and the hand label wins over the measure", () => {
+    const measured = [...tracks, { ...song("medida", 180), energy: "animada" as const }, { ...song(ids("tranquila")[9], 180), energy: "animada" as const }];
+    const plays = walk(measured, JUNE_10, JUNE_10 + 7 * DAY);
+    const hoursOf = (i: number) => plays.filter((p) => p.index === i).map((p) => hourInSpain(p.at));
+    expect(hoursOf(measured.length - 2).some((h) => h < 8)).toBe(false);
+    expect(hoursOf(measured.length - 1).some((h) => h >= 20)).toBe(false);
+  });
+
+  it("lets a nocturnal song into the night whatever its energy, and plays it mostly after dark", () => {
+    const withPiano = [...tracks, { ...song("piano", 180), energy: "tranquila" as const, nocturna: true }];
+    const hours = walk(withPiano, JUNE_10, JUNE_10 + 14 * DAY).filter((p) => p.index === withPiano.length - 1).map((p) => hourInSpain(p.at));
+    expect(hours.some((h) => h >= 20)).toBe(true);
+    const night = hours.filter((h) => h >= 20 || h < 8).length;
+    expect(night).toBeGreaterThan(hours.length - night);
+  });
+
   it("never repeats a song soon after it played", () => {
     const played = walk(tracks, JUNE_10, JUNE_10 + 3 * DAY);
     for (let i = 1; i < played.length; i++) expect(played[i].index).not.toBe(played[i - 1].index);

@@ -1,4 +1,4 @@
-import { ENERGY, SLOTS, type Energy } from "./franjas";
+import { ENERGY, NOCTURNA_BOOST, SLOTS, type Energy } from "./franjas";
 
 // Used until a player reports the real YouTube length
 const FALLBACK_DURATION_SEC = 240;
@@ -10,7 +10,7 @@ const NEW_FOR_DAYS = 30;
 // too soon; capped by the slot's size so small slots still have something to pick
 const MIN_GAP = 12;
 
-export type ScheduleTrack = { id: string; durationSec?: number; firstSeenAt?: string };
+export type ScheduleTrack = { id: string; durationSec?: number; firstSeenAt?: string; energy?: Energy | null; nocturna?: boolean };
 
 /** mulberry32: a seeded random, so every listener draws the same songs */
 function seededRandom(seed: number) {
@@ -47,7 +47,7 @@ function madridHour(dayUtc: number, hour: number) {
   return wall - madridOffset(guess);
 }
 
-type Slot = { start: number; end: number; pool: number[] };
+type Slot = { start: number; end: number; pool: number[]; nocturnas: boolean };
 type Play = { index: number; start: number; end: number };
 
 /**
@@ -64,12 +64,13 @@ function daySchedule(tracks: ScheduleTrack[], dayUtc: number): Play[] {
   });
   const slots: Slot[] = SLOTS.map((s, i) => {
     const fits = (e: Energy | undefined) => !e || s.plays.includes(e);
-    const pool = tracks.flatMap((t, index) => (fits(ENERGY[t.id]) ? [index] : []));
+    const pool = tracks.flatMap((t, index) => (fits(ENERGY[t.id] ?? t.energy ?? undefined) || (s.nocturnas && t.nocturna) ? [index] : []));
     return {
       start: madridHour(dayUtc, s.from),
       end: madridHour(dayUtc, SLOTS[i + 1]?.from ?? 24),
       // A slot nothing suits plays everything rather than going silent
       pool: pool.length ? pool : tracks.map((_, index) => index),
+      nocturnas: !!s.nocturnas,
     };
   });
 
@@ -82,8 +83,9 @@ function daySchedule(tracks: ScheduleTrack[], dayUtc: number): Play[] {
     while (t < slot.end) {
       const blocked = gap > 0 ? recent.slice(-gap) : [];
       const candidates = slot.pool.filter((i) => !blocked.includes(i));
-      let r = random() * candidates.reduce((sum, i) => sum + weights[i], 0);
-      const index = candidates.find((i) => (r -= weights[i]) < 0) ?? candidates.at(-1)!;
+      const weight = (i: number) => weights[i] * (slot.nocturnas && tracks[i].nocturna ? NOCTURNA_BOOST : 1);
+      let r = random() * candidates.reduce((sum, i) => sum + weight(i), 0);
+      const index = candidates.find((i) => (r -= weight(i)) < 0) ?? candidates.at(-1)!;
       plays.push({ index, start: t, end: t + lens[index] * 1000 });
       recent.push(index);
       t += lens[index] * 1000;
@@ -105,7 +107,7 @@ export function nowPlaying(tracks: ScheduleTrack[], nowMs: number) {
   // Midnight on today's Spanish date, as if Spain were UTC; the day's first song starts then,
   // cutting short whatever yesterday was still playing
   const dayUtc = local - (((local % DAY_MS) + DAY_MS) % DAY_MS);
-  const key = `${dayUtc}|${tracks.map((t) => `${t.id}:${t.durationSec}:${t.firstSeenAt}`).join()}`;
+  const key = `${dayUtc}|${tracks.map((t) => `${t.id}:${t.durationSec}:${t.firstSeenAt}:${t.energy}:${t.nocturna}`).join()}`;
   if (cached?.key !== key) cached = { key, plays: daySchedule(tracks, dayUtc) };
   const play = cached.plays.find((p) => p.start <= nowMs && nowMs < p.end);
   if (play) return { index: play.index, offsetSec: (nowMs - play.start) / 1000 };

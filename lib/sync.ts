@@ -2,6 +2,7 @@ import { after, connection } from "next/server";
 import { cache } from "react";
 import { cadenaActual, type CadenaEnAntena } from "./cadenas-server";
 import { readDb, updateDb, type Track } from "./db";
+import { trackMeasures } from "./reccobeats";
 import { playlistTracks, trackCover } from "./spotify";
 import { VIDEO_OVERRIDES } from "./videos";
 import { findVideo } from "./youtube";
@@ -35,6 +36,7 @@ export async function syncPlaylist({ dbKey, playlistId }: CadenaEnAntena) {
     db.lastSyncAt = now;
   });
   await fillCovers(dbKey, db.tracks.filter((t) => !t.cover));
+  await fillMeasures(dbKey, db.tracks.filter((t) => t.nocturna === undefined));
   if (process.env.YOUTUBE_API_KEY) await fillVideos(dbKey, db.tracks.filter((t) => t.youtubeId === undefined));
   return added;
 }
@@ -47,6 +49,19 @@ async function fillVideos(dbKey: string, tracks: Track[]) {
       const t = db.tracks.find((x) => x.id === id);
       if (t && ids[i] !== undefined) t.youtubeId = ids[i];
     });
+  });
+}
+
+async function fillMeasures(dbKey: string, tracks: { id: string }[]) {
+  if (!tracks.length) return;
+  // A failed request (network, API down) leaves them undefined, so the next sync asks again
+  const measures = await trackMeasures(tracks.map((t) => t.id)).catch(() => undefined);
+  if (!measures) return;
+  await updateDb(dbKey, (db) => {
+    for (const t of db.tracks) {
+      const m = measures.get(t.id);
+      if (m) Object.assign(t, m);
+    }
   });
 }
 

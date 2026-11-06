@@ -71,7 +71,7 @@ export function PonUnTema({ playlists }: { playlists: Record<string, string> }) 
           type="search"
           value={busqueda}
           onChange={(e) => setBusqueda(e.target.value)}
-          placeholder="The Beatles Yesterday, open.spotify.com/track/…"
+          placeholder="Artista, canción u open.spotify.com/track/…"
           className="border-2 border-black bg-transparent px-3 py-3 text-lg placeholder:text-black/40"
         />
       </label>

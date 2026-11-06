@@ -64,7 +64,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <header className="grid grid-cols-[1fr_auto_1fr] items-center gap-4 px-4 pb-6 pt-4 font-display text-xl uppercase leading-none sm:items-start sm:px-8 sm:text-2xl">
             {/* Equal 1fr side columns keep the logo centred however wide the sides grow; the
                 right one holds the channel switch, when there's more than one. */}
-            <NavLinks playlists={Object.fromEntries(cadenas.map((c) => [c.id, c.playlistUrl]))} cadenas={publicas()} />
+            <NavLinks cadenas={publicas()} />
             <Link href="/" className="flex flex-col items-center gap-1">
               <Logo className="h-14 w-auto sm:h-20" />
               <span className="font-mono text-xs tracking-[0.5em] sm:text-sm">Radio</span>
@@ -73,6 +73,16 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           </header>
         </div>
         <main>{children}</main>
+        {/* YouTube's API terms ask for a link to theirs and a privacy policy that points to Google's */}
+        <footer className="flex flex-wrap justify-center gap-x-4 gap-y-1 px-4 pb-6 font-mono text-[10px] uppercase sm:px-8">
+          <span>Usa los servicios de la API de YouTube</span>
+          <a href="https://www.youtube.com/t/terms" target="_blank" rel="noreferrer" className="underline underline-offset-2">
+            Condiciones de YouTube
+          </a>
+          <Link href="/privacidad" className="underline underline-offset-2">
+            Privacidad
+          </Link>
+        </footer>
         <CortinillaDibus />
         <Nieve en={cadenas.filter((c) => c.nieve).map((c) => c.id)} />
       </body>

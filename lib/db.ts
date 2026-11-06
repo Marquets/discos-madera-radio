@@ -20,6 +20,8 @@ export type Track = {
   youtubeId?: string | null;
   /** Spotify user id of whoever added it, when the sync reads the Web API */
   addedBy?: string;
+  /** Who picked it in /pon-un-tema, where Spotify only sees the radio's own account; wins over addedBy, and empty means nobody said */
+  cortesia?: string;
   /** When it was added to the playlist, or when the radio first saw it if the sync reads the embed */
   firstSeenAt: string;
   /** Measured at sync, for the time slots; null when ReccoBeats doesn't know it. ENERGY in franjas.ts wins */
@@ -28,7 +30,8 @@ export type Track = {
   nocturna?: boolean;
 };
 
-type Db = { lastSyncAt?: string; tracks: Track[] };
+/** cortesias outlives the track: a sync can drop a song added a moment ago and bring it back later */
+type Db = { lastSyncAt?: string; tracks: Track[]; cortesias?: Record<string, string> };
 
 type Key = Cadena["dbKey"];
 

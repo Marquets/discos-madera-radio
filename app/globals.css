@@ -268,6 +268,31 @@ html[data-anim="dibus"] header a[href="/"] svg {
   mask: var(--dibu) center / contain no-repeat;
 }
 
+/* El aviso de "¡Añade tu tema!" junto al menú (NavLinks.tsx): late de vez en cuando */
+@keyframes latido {
+  0%,
+  80%,
+  100% {
+    scale: 1;
+  }
+  85% {
+    scale: 1.12;
+  }
+  90% {
+    scale: 0.96;
+  }
+}
+
+.aviso-tema {
+  animation: latido 4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aviso-tema {
+    animation: none;
+  }
+}
+
 /* Quién trajo la canción (TapeDeck.tsx): de vez en cuando se abre un ojo en el cabezal, que
    parpadea y se cierra, y debajo el cartel con el nombre, escondido hasta pasar el ratón o tocarlo */
 @keyframes asoma {

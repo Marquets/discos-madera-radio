@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { contributorName } from "@/lib/contributors";
+import { quienLoTrajo } from "@/lib/contributors";
 import { nowPlaying } from "@/lib/schedule";
 import { DRAWINGS } from "./CortinillaDibus";
 
-type DeckTrack = { id: string; title: string; artist: string; durationSec: number; firstSeenAt: string; addedBy?: string };
+type DeckTrack = { id: string; title: string; artist: string; durationSec: number; firstSeenAt: string; addedBy?: string; cortesia?: string };
 
 // Discos Madera poster palette, from the theme colours in globals.css
 const CREAM = "var(--color-accent)";
@@ -155,7 +155,7 @@ export function TapeDeck({ tracks }: { tracks: DeckTrack[] }) {
   const left = REEL.empty + (REEL.full - REEL.empty) * (1 - progress);
   const right = REEL.empty + (REEL.full - REEL.empty) * progress;
   const spin = reduced ? 0 : elapsed * 6000;
-  const adder = track?.addedBy && contributorName(track.addedBy);
+  const adder = track && quienLoTrajo(track);
 
   return (
     <figure className="mx-auto w-full max-w-4xl">

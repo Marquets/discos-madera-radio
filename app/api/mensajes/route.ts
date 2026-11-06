@@ -1,7 +1,7 @@
 import { connection } from "next/server";
 import { COOLDOWN_MS, addMessage, clean, readMessages } from "@/lib/messages";
 
-// shortcut: per function instance and keyed by IP, as in the canvas; move it to the blob
+// shortcut: per function instance and keyed by IP; move it to the blob
 // store if people start flooding the hero
 const lastMessage = new Map<string, number>();
 

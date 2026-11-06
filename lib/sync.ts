@@ -29,7 +29,7 @@ export async function syncPlaylist({ dbKey, playlistId }: CadenaEnAntena) {
     const known = new Set(db.tracks.map((t) => t.id));
     for (const { addedAt, ...t } of fresh) {
       if (known.has(t.id)) continue;
-      db.tracks.push({ ...t, firstSeenAt: addedAt ?? now });
+      db.tracks.push({ ...t, cortesia: db.cortesias?.[t.id], firstSeenAt: addedAt ?? now });
       added++;
     }
     for (const t of db.tracks) if (VIDEO_OVERRIDES[t.id]) t.youtubeId = VIDEO_OVERRIDES[t.id];

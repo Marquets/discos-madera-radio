@@ -4,6 +4,8 @@ import contributors from "../data/contributors.json";
 
 const NAMES: Record<string, string | undefined> = contributors;
 
+export const contributorName = (id: string) => NAMES[id] ?? id;
+
 /**
  * Distinct names, most recent first. Whoever added the newest song leads, and a name
  * already shown is not repeated further down, so six songs by one person do not fill
@@ -13,7 +15,7 @@ export function recentContributors(tracksOldestFirst: { addedBy?: string }[], li
   const names: string[] = [];
   for (let i = tracksOldestFirst.length - 1; i >= 0 && names.length < limit; i--) {
     const id = tracksOldestFirst[i].addedBy;
-    const name = id && (NAMES[id] ?? id);
+    const name = id && contributorName(id);
     if (name && !names.includes(name)) names.push(name);
   }
   return names;

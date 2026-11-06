@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { contributorName } from "@/lib/contributors";
 import { nowPlaying } from "@/lib/schedule";
 import { DRAWINGS } from "./CortinillaDibus";
 
-type DeckTrack = { id: string; title: string; artist: string; durationSec: number; firstSeenAt: string };
+type DeckTrack = { id: string; title: string; artist: string; durationSec: number; firstSeenAt: string; addedBy?: string };
 
 // Discos Madera poster palette, from the theme colours in globals.css
 const CREAM = "var(--color-accent)";
@@ -115,6 +116,34 @@ function ReelDibu() {
   );
 }
 
+/**
+ * Who added the song stays a little secret: now and then an eye opens on the tape head, and
+ * hovering it (or tapping, on a phone) shows their first name under it.
+ */
+function QuienLoTrajo({ name }: { name: string }) {
+  const first = name.split(" ")[0];
+  return (
+    <g className="quien" tabIndex={0}>
+      <rect x={HEAD_X - 17} y="260" width="34" height="28" fill={CREAM} />
+      <g className="quien-ojo">
+        <path d={`M${HEAD_X - 12} 274Q${HEAD_X} 263 ${HEAD_X + 12} 274Q${HEAD_X} 285 ${HEAD_X - 12} 274Z`} fill="var(--color-black)" />
+        <circle cx={HEAD_X} cy="274" r="4.5" fill={CREAM} />
+        <circle cx={HEAD_X} cy="274" r="2" fill="var(--color-black)" />
+      </g>
+      <g className="quien-cartel">
+        <text x={HEAD_X} y="311" textAnchor="middle" fill={CREAM} className="uppercase">
+          <tspan fontSize="8" letterSpacing="2" className="font-mono">
+            cortesía de{" "}
+          </tspan>
+          <tspan fontSize={Math.min(14, 170 / first.length)} className="font-display">
+            {first}
+          </tspan>
+        </text>
+      </g>
+    </g>
+  );
+}
+
 export function TapeDeck({ tracks }: { tracks: DeckTrack[] }) {
   const { now, reduced } = useClock();
   const np = now === null ? null : nowPlaying(tracks, now);
@@ -126,11 +155,12 @@ export function TapeDeck({ tracks }: { tracks: DeckTrack[] }) {
   const left = REEL.empty + (REEL.full - REEL.empty) * (1 - progress);
   const right = REEL.empty + (REEL.full - REEL.empty) * progress;
   const spin = reduced ? 0 : elapsed * 6000;
+  const adder = track?.addedBy && contributorName(track.addedBy);
 
   return (
     <figure className="mx-auto w-full max-w-4xl">
       {/* Recortado por arriba: el lienzo guardaba el hueco del minutero que ya no está */}
-      <svg viewBox="0 58 736 262" role="img" aria-label={track ? `Sonando: ${track.title} de ${track.artist}` : "Magnetófono de la radio"} className="block w-full rounded-xl bg-black">
+      <svg viewBox="0 58 736 262" role="img" aria-label={track ? `Sonando: ${track.title} de ${track.artist}${adder ? `, cortesía de ${adder}` : ""}` : "Magnetófono de la radio"} className="block w-full rounded-xl bg-black">
         {[-2, -1, 0, 1, 2].map((i) => (
           <line key={i} x1={HEAD_X + i * 18} x2={HEAD_X + i * 18} y1="88" y2={i === 0 ? "106" : "100"} stroke={i === 0 ? CREAM : WIRE} strokeWidth="3" />
         ))}
@@ -143,7 +173,7 @@ export function TapeDeck({ tracks }: { tracks: DeckTrack[] }) {
         <circle cx="255" cy="282" r="12" fill="var(--color-black)" stroke={CREAM} strokeWidth="2.5" />
         <circle cx="480" cy="282" r="12" fill="var(--color-black)" stroke={CREAM} strokeWidth="2.5" />
         <circle cx="540" cy="287" r="7" fill={WIRE} />
-        <rect x={HEAD_X - 17} y="260" width="34" height="28" fill={CREAM} />
+        {adder ? <QuienLoTrajo name={adder} /> : <rect x={HEAD_X - 17} y="260" width="34" height="28" fill={CREAM} />}
         <ReelDibu />
       </svg>
     </figure>

@@ -601,16 +601,16 @@ html[data-cortinilla] header a[href="/"] {
   }
 }
 
-/* Salvapantallas (Salvapantallas.tsx): tras un minuto sin tocar nada con la radio puesta, la
-   portada se queda en logo, magnetófono y reproductor, para dejarla puesta en una tele. No se
-   mueve nada de sitio, solo se apaga lo demás: la portada ya centra ese conjunto en una
-   pantalla, y mover el reproductor lo recargaría y cortaría la música. Los mensajes que cruzan
-   y el paseo se quedan, que le dan vida. */
+/* Salvapantallas (Salvapantallas.tsx): tras medio minuto sin tocar nada con la radio puesta,
+   la portada se queda en logo, magnetófono y reproductor, para dejarla puesta en una tele. No
+   se mueve nada de sitio, solo se apaga lo demás: la portada ya centra ese conjunto en una
+   pantalla, y mover el reproductor lo recargaría y cortaría la música. El paseo se queda, que
+   le da vida. */
 html[data-salvapantallas] {
   overflow: hidden;
   cursor: none;
 
-  & :is(.ticker, header nav, header [role="group"], .mensajes-form) {
+  & :is(.ticker, header nav, header [role="group"], .mensajes-form, .mensajes-lista) {
     opacity: 0;
     pointer-events: none;
   }
@@ -624,7 +624,8 @@ html[data-salvapantallas] {
 .ticker,
 header nav,
 header [role="group"],
-.mensajes-form {
+.mensajes-form,
+.mensajes-lista {
   transition: opacity 1.5s ease;
 }
 

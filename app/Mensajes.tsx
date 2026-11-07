@@ -84,7 +84,7 @@ export function Mensajes({ maxLength }: { maxLength: number }) {
           ref={list}
           aria-label="Mensajes de los oyentes"
           // Newest on top when listed, without reordering the DOM the floating positions hang on
-          className={`pointer-events-none absolute inset-0 overflow-hidden ${listed ? "flex flex-col-reverse items-start justify-center-safe gap-1 px-4 py-4 sm:px-8" : ""}`}
+          className={`mensajes-lista pointer-events-none absolute inset-0 overflow-hidden ${listed ? "flex flex-col-reverse items-start justify-center-safe gap-1 px-4 py-4 sm:px-8" : ""}`}
         >
           {messages.map((m, i) => {
             const h = hash(m.id);

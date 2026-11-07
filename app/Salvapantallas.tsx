@@ -2,10 +2,10 @@
 
 import { useEffect } from "react";
 
-// A minute untouched with the radio on, and the front page turns into just the logo, the tape
+// Half a minute untouched with the radio on, and the front page turns into just the logo, the tape
 // deck and the player: for leaving it on a TV or a laptop across the room. Not on phones, where
 // nobody leaves the screen on untouched and it would only get in the way.
-const IDLE_MS = 60_000;
+const IDLE_MS = 30_000;
 // A nudge of the mouse on the desk is not someone coming back
 const MOVE_PX = 12;
 const ATTR = "data-salvapantallas";

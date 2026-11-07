@@ -2,10 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import { quienLoTrajo } from "@/lib/contributors";
+import { ENERGY, type Energy } from "@/lib/franjas";
 import { nowPlaying } from "@/lib/schedule";
 import { DRAWINGS } from "./CortinillaDibus";
 
-type DeckTrack = { id: string; title: string; artist: string; durationSec: number; firstSeenAt: string; addedBy?: string; cortesia?: string };
+type DeckTrack = { id: string; title: string; artist: string; durationSec: number; firstSeenAt: string; addedBy?: string; cortesia?: string; energy?: Energy | null };
 
 // Discos Madera poster palette, from the theme colours in globals.css
 const CREAM = "var(--color-accent)";
@@ -34,6 +35,72 @@ function useClock() {
   }, []);
 
   return { now, reduced };
+}
+
+// The meter over the head. The players live in Spotify's and YouTube's iframes, which don't
+// let the page hear the music, so the bars dance to a made-up signal instead: a beat at the
+// song's pace plus a wobble per bar, livelier the livelier the song (lib/franjas.ts).
+const METER = {
+  // floor + amp is the most it reaches: calm songs stay mid-height, lively ones reach the top
+  tranquila: { bps: 1.1, floor: 0.12, amp: 0.6 },
+  media: { bps: 1.6, floor: 0.2, amp: 0.75 },
+  animada: { bps: 2.1, floor: 0.28, amp: 0.8 },
+} as const;
+// The bars stand on a common base and grow upwards; lengths at rest, least and most, the middle
+// one longer. The base sits just clear of the drawing under it (y 133.5)
+const METER_BASE = 122;
+const BAR = { rest: 12, min: 2, max: 38 };
+const BAR_MID = { rest: 18, min: 4, max: 44 };
+
+function meterLength(i: number, t: number, energy: Energy) {
+  const { bps, floor, amp } = METER[energy];
+  const bar = i === 0 ? BAR_MID : BAR;
+  // A kick on every beat that dies away, a little late on the outer bars
+  const beat = Math.exp(-(((t * bps - Math.abs(i) * 0.06) % 1) + 1) % 1 * 4);
+  // Each bar wobbles at its own speeds, so they never move in step
+  const wobble = 0.5 + 0.25 * Math.sin(t * (3.1 + i * 0.7) + i * 1.9) + 0.25 * Math.sin(t * (7.3 - i * 1.1) + i * 4.2);
+  const level = Math.min(1, floor + amp * (0.6 * beat + 0.4 * wobble));
+  return bar.min + (bar.max - bar.min) * level;
+}
+
+function MeterBar({ i, length }: { i: number; length: number }) {
+  const x = HEAD_X + i * 18;
+  return <line x1={x} x2={x} y1={METER_BASE} y2={METER_BASE - length} stroke={i === 0 ? CREAM : WIRE} strokeWidth="3" />;
+}
+
+/** Whether the radio has a song loaded, from the player's box in the layout (RadioPlayer.tsx) */
+function useSonando() {
+  const [on, setOn] = useState(false);
+  useEffect(() => {
+    const check = () => setOn(!!document.querySelector("#radio[data-on]"));
+    check();
+    const watch = new MutationObserver(check);
+    watch.observe(document.body, { subtree: true, childList: true, attributeFilter: ["data-on"] });
+    return () => watch.disconnect();
+  }, []);
+  return on;
+}
+
+type Point = [number, number];
+
+/**
+ * Where the tape leaves a reel's pack for a guide post: the outer tangent of the two circles,
+ * on the side away from the deck's middle (`side` -1 left, 1 right). Returns the point on the
+ * pack and the point on the post.
+ */
+function tapeTangent(pack: Point, packR: number, post: Point, postR: number, side: -1 | 1): [Point, Point] {
+  // A line n·x = c touching both circles from the same side has n·(pack − post) = packR − postR
+  const vx = pack[0] - post[0];
+  const vy = pack[1] - post[1];
+  const base = Math.atan2(vy, vx);
+  const turn = Math.acos((packR - postR) / Math.hypot(vx, vy));
+  const normals = [base + turn, base - turn].map((a) => [Math.cos(a), Math.sin(a)] as Point);
+  // The touching points are centre − r·n, so the outer side wants n pointing back inwards
+  const [nx, ny] = normals.sort((a, b) => side * (a[0] - b[0]))[0];
+  return [
+    [pack[0] - packR * nx, pack[1] - packR * ny],
+    [post[0] - postR * nx, post[1] - postR * ny],
+  ];
 }
 
 function Reel({ cx, tape, angle }: { cx: number; tape: number; angle: number }) {
@@ -163,19 +230,24 @@ export function TapeDeck({ tracks }: { tracks: DeckTrack[] }) {
   const right = REEL.empty + (REEL.full - REEL.empty) * progress;
   const spin = reduced ? 0 : elapsed * 6000;
   const adder = track && quienLoTrajo(track);
+  const sonando = useSonando();
+  const energy = track ? (ENERGY[track.id] ?? track.energy ?? "media") : "media";
+  const dancing = sonando && !reduced && track;
 
   return (
     <figure className="mx-auto w-full max-w-4xl">
       {/* Recortado por arriba: el lienzo guardaba el hueco del minutero que ya no está */}
       <svg viewBox="0 58 736 262" role="img" aria-label={track ? `Sonando: ${track.title} de ${track.artist}${adder ? `, cortesía de ${adder}` : ""}` : "Magnetófono de la radio"} className="block w-full rounded-xl bg-black">
         {[-2, -1, 0, 1, 2].map((i) => (
-          <line key={i} x1={HEAD_X + i * 18} x2={HEAD_X + i * 18} y1="88" y2={i === 0 ? "106" : "100"} stroke={i === 0 ? CREAM : WIRE} strokeWidth="3" />
+          <MeterBar key={i} i={i} length={dancing ? meterLength(i, elapsed, energy) : (i === 0 ? BAR_MID : BAR).rest} />
         ))}
 
+        {/* The tape: off the outside of the left pack, round the guides and the head, onto the right
+            pack. Under the reels, so it comes out from under the pack's edge */}
+        <polyline points={[...tapeTangent([200, 160], left, [195, 287], 7, -1), [195, 287], [255, 282], [HEAD_X, 272], [480, 282], [540, 287], ...tapeTangent([540, 160], right, [540, 287], 7, 1).toReversed()].map((p) => p.map((n) => n.toFixed(1)).join(",")).join(" ")} fill="none" stroke={TAPE} strokeWidth="3" strokeLinejoin="round" />
         <Reel cx={200} tape={left} angle={spin / left} />
         <Reel cx={540} tape={right} angle={spin / right} />
 
-        <polyline points={`${200 - 40},${160 + left * 0.9} 195,287 255,282 ${HEAD_X},272 480,282 540,287 ${540 + 40},${160 + right * 0.9}`} fill="none" stroke={WIRE} strokeWidth="2" />
         <circle cx="195" cy="287" r="7" fill={WIRE} />
         <circle cx="255" cy="282" r="12" fill="var(--color-black)" stroke={CREAM} strokeWidth="2.5" />
         <circle cx="480" cy="282" r="12" fill="var(--color-black)" stroke={CREAM} strokeWidth="2.5" />

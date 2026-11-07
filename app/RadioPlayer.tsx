@@ -1,6 +1,6 @@
 "use client";
 
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import type { Energy } from "@/lib/franjas";
 import { JINGLE_EVERY, JINGLES } from "@/lib/jingles";
@@ -90,7 +90,8 @@ export function RadioPlayer({ tracks, thanks }: { tracks: RadioTrack[]; thanks: 
   const [folded, setFolded] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const progress = useRef<Progress>(null);
-  const [current, setCurrent] = useState<number | null>(null);
+  // By id, not position: the list can change under the player when a song is added or removed
+  const [current, setCurrent] = useState<string | null>(null);
   // Separate from `current`: the browser may refuse to play what we just loaded
   const [playing, setPlaying] = useState(false);
   const [videoTitle, setVideoTitle] = useState<string>();
@@ -122,15 +123,26 @@ export function RadioPlayer({ tracks, thanks }: { tracks: RadioTrack[]; thanks: 
     applyVolume.current(volume);
   }, [volume]);
 
-  // The layout hands over a fresh array whenever the server re-renders it, even with the
-  // same songs, and rebuilding the player on that would cut the music mid-song
-  const tracksKey = tracks.map((t) => `${t.id}:${t.durationSec}:${t.youtubeId}`).join();
+  // The player is built once and reads the latest list from here: the layout hands over a new
+  // one whenever the server re-renders it, and rebuilding on that would cut the music mid-song
+  const tracksRef = useRef(tracks);
+  useEffect(() => {
+    tracksRef.current = tracks;
+  }, [tracks]);
+  const hasTracks = tracks.length > 0;
+  // Asks the server for the list again, so a song added meanwhile reaches every listener at the
+  // next change of song, and everyone moves on to the same draw (lib/schedule.ts)
+  const router = useRouter();
+  const refreshList = useRef(() => router.refresh());
+  useEffect(() => {
+    refreshList.current = () => router.refresh();
+  }, [router]);
 
   // Build the player up front so the radio can try to start on its own, and so the
   // button is instant when it can't: browsers only grant autoplay to origins the
   // visitor has already interacted with, so a first-timer still has to press play.
   useEffect(() => {
-    if (!tracks.length || live) return;
+    if (!hasTracks || live) return;
     let cancelled = false;
 
     const jingle = new Audio();
@@ -177,7 +189,7 @@ export function RadioPlayer({ tracks, thanks }: { tracks: RadioTrack[]; thanks: 
     try {
       jinglesPlayed = Number(localStorage.getItem(JINGLE_KEY)) || 0;
     } catch {}
-    let playingIndex = -1;
+    let playingId: string | null = null;
     // Only YouTube has a mute; with Spotify the button isn't shown
     let usingYoutube = false;
     applyMute.current = (m) => {
@@ -193,9 +205,9 @@ export function RadioPlayer({ tracks, thanks }: { tracks: RadioTrack[]; thanks: 
       showJingle(false);
       // So the new song's first "paused at 0" report isn't taken for the end of the old one
       progress.current = null;
-      const track = tracks[index];
-      playingIndex = index;
-      setCurrent(index);
+      const track = tracksRef.current[index];
+      playingId = track.id;
+      setCurrent(track.id);
       controller.current?.load(track, startAt);
       controller.current?.play();
 
@@ -213,6 +225,7 @@ export function RadioPlayer({ tracks, thanks }: { tracks: RadioTrack[]; thanks: 
         next();
       }
       timer.current = setTimeout(waitForEnd, (track.durationSec - startAt) * 1000);
+      refreshList.current();
     }
 
     function next() {
@@ -222,9 +235,10 @@ export function RadioPlayer({ tracks, thanks }: { tracks: RadioTrack[]; thanks: 
       // few seconds into it. Each song and jingle adds that delay, so a long session drifts
       // from other listeners; a reload re-syncs.
       const playNext = () => {
+        const tracks = tracksRef.current;
         let np = nowPlaying(tracks, Date.now())!;
         // A song that ends a moment before the clock does would otherwise play again
-        if (np.index === playingIndex) np = nowPlaying(tracks, Date.now() + (tracks[np.index].durationSec - np.offsetSec) * 1000 + 1)!;
+        if (tracks[np.index].id === playingId) np = nowPlaying(tracks, Date.now() + (tracks[np.index].durationSec - np.offsetSec) * 1000 + 1)!;
         playAt(np.index, 0);
       };
       if (!JINGLES.length || ++songsSinceJingle < JINGLE_EVERY || (document.hidden && !jingleReady)) return playNext();
@@ -255,7 +269,7 @@ export function RadioPlayer({ tracks, thanks }: { tracks: RadioTrack[]; thanks: 
     }
 
     function playScheduled() {
-      const np = nowPlaying(tracks, Date.now())!;
+      const np = nowPlaying(tracksRef.current, Date.now())!;
       playAt(np.index, Math.floor(np.offsetSec));
     }
     // ?cortinilla in the address plays a jingle right away instead of waiting for it, to try them out
@@ -314,7 +328,7 @@ export function RadioPlayer({ tracks, thanks }: { tracks: RadioTrack[]; thanks: 
       try {
         stored = localStorage.getItem(SOURCE_KEY);
       } catch {}
-      const youtube = tracks.some((t) => t.youtubeId) && (matchMedia("(pointer: coarse), (max-width: 639px)").matches || stored === "youtube");
+      const youtube = tracksRef.current.some((t) => t.youtubeId) && (matchMedia("(pointer: coarse), (max-width: 639px)").matches || stored === "youtube");
       // Both players replace the target node with their iframe, so give them one React doesn't own
       const target = document.createElement("div");
       // Always here, never in the page: moving an iframe reloads it and cuts the music,
@@ -332,8 +346,8 @@ export function RadioPlayer({ tracks, thanks }: { tracks: RadioTrack[]; thanks: 
         const api = await loadSpotifyApi();
         if (cancelled) return;
         setSource("spotify");
-        const first = nowPlaying(tracks, Date.now())!;
-        api.createController(target, { uri: tracks[first.index].spotifyUri, width: "100%", height: 80, theme: "dark" }, (c) => {
+        const first = nowPlaying(tracksRef.current, Date.now())!;
+        api.createController(target, { uri: tracksRef.current[first.index].spotifyUri, width: "100%", height: 80, theme: "dark" }, (c) => {
           controller.current = { load: (t, startAt) => c.loadUri(t.spotifyUri, false, startAt), play: () => c.play(), destroy: () => c.destroy() };
           // The only signal the browser actually let us play; play() itself reports nothing
           c.addListener("playback_started", () => setPlaying(true));
@@ -352,10 +366,9 @@ export function RadioPlayer({ tracks, thanks }: { tracks: RadioTrack[]; thanks: 
       setPlaying(false);
       setCurrent(null);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- tracksKey stands for tracks, see above
-  }, [tracksKey, choice, live]);
+  }, [hasTracks, choice, live]);
 
-  const track = current === null ? null : tracks[current];
+  const track = tracks.find((t) => t.id === current) ?? null;
   const gracias = thanks.length ? ` · Gracias a ${thanks.join(", ")}` : "";
   const ticker = live
     ? "Live · Directos del colectivo Discos Madera"

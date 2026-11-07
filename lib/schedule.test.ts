@@ -82,6 +82,24 @@ describe("nowPlaying", () => {
     for (let i = 1; i < played.length; i++) expect(played[i].index).not.toBe(played[i - 1].index);
   });
 
+  it("doesn't bring a song back until most of its slot has played", () => {
+    // The afternoon draws from all 24, so 18 others come first; within the hour was the complaint
+    const afternoon = walk(tracks, JUNE_10 + 13 * 3600_000, JUNE_10 + 20 * 3600_000).filter((p) => hourInSpain(p.at) >= 14 && hourInSpain(p.at) < 20);
+    afternoon.forEach((p, i) => {
+      const before = afternoon.slice(Math.max(0, i - 18), i).map((q) => q.index);
+      expect(before).not.toContain(p.index);
+    });
+  });
+
+  it("leaves the day so far as it was when a song is added", () => {
+    const added = new Date(JUNE_10 + 15 * 3600_000).toISOString();
+    const withNew = [...tracks, song("recien-llegada", 200, added)];
+    const before = walk(tracks, JUNE_10, JUNE_10 + 15 * 3600_000);
+    expect(walk(withNew, JUNE_10, JUNE_10 + 15 * 3600_000)).toEqual(before);
+    // and it does come up once it's there
+    expect(walk(withNew, JUNE_10 + 15 * 3600_000, JUNE_10 + DAY).some((p) => p.index === withNew.length - 1)).toBe(true);
+  });
+
   it("plays new songs more often than old ones", () => {
     const fresh = tracks.map((t, i) => (i === 12 || i === 13 ? { ...t, firstSeenAt: new Date(JUNE_10).toISOString() } : t));
     const played = walk(fresh, JUNE_10, JUNE_10 + 3 * DAY);

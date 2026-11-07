@@ -4,11 +4,11 @@ import { ENERGY, NOCTURNA_BOOST, SLOTS, type Energy } from "./franjas";
 const FALLBACK_DURATION_SEC = 240;
 const DAY_MS = 24 * 60 * 60 * 1000;
 // A brand-new song is this many times likelier to come up, fading to normal over NEW_FOR_DAYS
-const NEW_BOOST = 4;
+const NEW_BOOST = 2;
 const NEW_FOR_DAYS = 30;
-// A song can't come back until this many others have played, or a boosted one would repeat
-// too soon; capped by the slot's size so small slots still have something to pick
-const MIN_GAP = 12;
+// A song can't come back until this share of the songs it competes with have played, so a
+// boosted one doesn't come round again within the hour; always leaves at least one to pick
+const REPEAT_SHARE = 0.75;
 
 export type ScheduleTrack = { id: string; durationSec?: number; firstSeenAt?: string; energy?: Energy | null; nocturna?: boolean };
 
@@ -74,15 +74,23 @@ function daySchedule(tracks: ScheduleTrack[], dayUtc: number): Play[] {
     };
   });
 
+  // A song joins the draw from the moment the radio saw it, never earlier: adding one then
+  // leaves the day so far exactly as it was, so a listener who picks up the new list doesn't
+  // land on a reshuffled day that has forgotten what they just heard
+  const since = tracks.map((t) => (t.firstSeenAt ? Date.parse(t.firstSeenAt) : -Infinity));
+
   const random = seededRandom(dayUtc / DAY_MS);
   const recent: number[] = [];
   const plays: Play[] = [];
   let t = dayStart;
   for (const slot of slots) {
-    const gap = Math.min(MIN_GAP, slot.pool.length - 1);
     while (t < slot.end) {
+      const joined = slot.pool.filter((i) => since[i] <= t);
+      // A radio whose songs all arrived later today still has to play something
+      const pool = joined.length ? joined : slot.pool;
+      const gap = Math.min(Math.floor(pool.length * REPEAT_SHARE), pool.length - 1);
       const blocked = gap > 0 ? recent.slice(-gap) : [];
-      const candidates = slot.pool.filter((i) => !blocked.includes(i));
+      const candidates = pool.filter((i) => !blocked.includes(i));
       const weight = (i: number) => weights[i] * (slot.nocturnas && tracks[i].nocturna ? NOCTURNA_BOOST : 1);
       let r = random() * candidates.reduce((sum, i) => sum + weight(i), 0);
       const index = candidates.find((i) => (r -= weight(i)) < 0) ?? candidates.at(-1)!;

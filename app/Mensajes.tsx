@@ -123,7 +123,7 @@ export function Mensajes({ maxLength }: { maxLength: number }) {
         </ul>
       )}
       {/* Abajo a la izquierda del hero, fuera del flujo, para no mover el conjunto centrado */}
-      <div className="absolute bottom-4 left-4 flex w-[min(28rem,calc(100%-2rem))] flex-wrap items-center gap-x-4 gap-y-2 font-mono text-xs uppercase sm:left-8">
+      <div className="mensajes-form absolute bottom-4 left-4 flex w-[min(28rem,calc(100%-2rem))] flex-wrap items-center gap-x-4 gap-y-2 font-mono text-xs uppercase sm:left-8">
         {!open && (
           <button onClick={() => setOpen(true)} aria-expanded={false} className="py-1.5 hover:text-white">
             + Deja un mensaje

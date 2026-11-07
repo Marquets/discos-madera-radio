@@ -88,6 +88,12 @@ function ReelDibu() {
     };
     // Moving from one area to the other leaves one first, so look before stopping
     const leave = () => setTimeout(() => !hovered() && stop());
+    // The screensaver always shows the trunk (Salvapantallas.tsx)
+    const trunk = () => {
+      stop();
+      setN(TRUNK);
+    };
+    addEventListener("radio:salvapantallas", trunk);
 
     for (const el of areas) {
       el.addEventListener("pointerenter", play);
@@ -95,6 +101,7 @@ function ReelDibu() {
     }
     return () => {
       stop();
+      removeEventListener("radio:salvapantallas", trunk);
       for (const el of areas) {
         el.removeEventListener("pointerenter", play);
         el.removeEventListener("pointerleave", leave);

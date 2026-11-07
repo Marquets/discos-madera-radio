@@ -600,3 +600,69 @@ html[data-cortinilla] header a[href="/"] {
     transform: translateY(-12px) scale(1);
   }
 }
+
+/* Salvapantallas (Salvapantallas.tsx): tras un minuto sin tocar nada con la radio puesta, la
+   portada se queda en logo, magnetófono y reproductor, para dejarla puesta en una tele. No se
+   mueve nada de sitio, solo se apaga lo demás: la portada ya centra ese conjunto en una
+   pantalla, y mover el reproductor lo recargaría y cortaría la música. Los mensajes que cruzan
+   y el paseo se quedan, que le dan vida. */
+html[data-salvapantallas] {
+  overflow: hidden;
+  cursor: none;
+
+  & :is(.ticker, header nav, header [role="group"], .mensajes-form) {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  /* El ojo del cabezal y su "cortesía de" no: queda el cabezal liso */
+  & .quien :is(.quien-ojo, .quien-cartel) {
+    display: none;
+  }
+}
+
+.ticker,
+header nav,
+header [role="group"],
+.mensajes-form {
+  transition: opacity 1.5s ease;
+}
+
+/* En el salvapantallas el conjunto crece hasta donde deja la pantalla. --deck-w es el ancho
+   del magnetófono, que mide de alto 0.356 veces su ancho (su viewBox, 736 × 262). Lo demás
+   del conjunto mide unos 16.5rem con Spotify (logo grande, "Radio", márgenes y los 80px del
+   reproductor) y otros 17.25rem más con el vídeo de YouTube encima; sobre el logo quedan
+   3.25rem. --logo-drop lo centra en la pantalla, como fuera del salvapantallas. */
+@media (min-width: 640px) {
+  html[data-salvapantallas] {
+    --deck-w: min(64vw, calc((100svh - 21rem) / 0.356));
+    --logo-drop: max(1rem, calc((100svh - 16.5rem - var(--deck-w) * 0.356) / 2 - 3.25rem));
+
+    & body:has(#radio[data-source="youtube"]) {
+      --deck-w: min(64vw, calc((100svh - 38.25rem) / 0.356));
+      --logo-drop: max(1rem, calc((100svh - 33.75rem - var(--deck-w) * 0.356) / 2 - 3.25rem));
+    }
+
+    & header a[href="/"] svg {
+      height: 7rem;
+    }
+
+    & .hero > figure {
+      max-width: var(--deck-w);
+    }
+
+    & body:not(:has(#radio[data-source="youtube"])) #reproductor {
+      max-width: 36rem;
+    }
+  }
+
+  header a[href="/"] svg,
+  .hero > figure,
+  #reproductor {
+    transition: height 1.5s ease, max-width 1.5s ease;
+  }
+
+  header a[href="/"] {
+    transition: margin-top 1.5s ease;
+  }
+}

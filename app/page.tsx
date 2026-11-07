@@ -3,6 +3,7 @@ import { MAX_LENGTH } from "@/lib/messages";
 import { getTracks } from "@/lib/sync";
 import { Mensajes } from "./Mensajes";
 import { Paseo } from "./Paseo";
+import { Salvapantallas } from "./Salvapantallas";
 import { TapeDeck } from "./TapeDeck";
 import { TrackGrid } from "./TrackGrid";
 
@@ -28,6 +29,7 @@ export default async function Home() {
               reproductor. Alto fijo porque el iframe no vive dentro, mide 80px. */}
           <div id="reproductor" className="mx-auto mt-6 h-20 w-full max-w-md" />
           <Mensajes maxLength={MAX_LENGTH} />
+          <Salvapantallas />
         </div>
       )}
       <div className="px-4 pt-12 pb-16 sm:px-8">

@@ -2,9 +2,10 @@ import { MAX_SEMANA, REVISAR } from "./buzon-reglas";
 import { blobs, withinTimeout } from "./db";
 
 /**
- * El buzón de voz de la portada: mensajes de hasta 30 segundos para la radio. Llegan sin aprobar;
- * los aprobados se pueden escuchar desde la portada y suenan en antena en el hueco de una
- * cortinilla. Todos se borran a la semana de grabarse.
+ * El buzón de voz de la portada: mensajes de hasta 30 segundos para la radio. Entran aprobados,
+ * o esperan a que alguien los apruebe si REVISAR (buzon-reglas.ts); los aprobados se pueden
+ * escuchar desde la portada y suenan en antena detrás de una cortinilla. Todos se borran a la
+ * semana de grabarse.
  */
 export type Audio = { id: string; at: string; type: string; aprobado: boolean };
 

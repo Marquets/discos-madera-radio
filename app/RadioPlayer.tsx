@@ -259,13 +259,13 @@ export function RadioPlayer({ tracks, thanks, cadena, cadenas }: { tracks: Radio
         playAt(np.index, 0);
       };
       if (++songsSinceJingle < JINGLE_EVERY || (document.hidden && !jingleReady)) return playNext();
-      // El hueco de la cortinilla es para un mensaje del buzón que aquí aún no se haya oído
+      // Detrás de la cortinilla, un mensaje del buzón que aquí aún no se haya oído, si lo hay
       const nuevo = buzonList.find((m) => !oidos.has(m.id));
-      if (nuevo) {
-        songsSinceJingle = 0;
-        return ponMensajes([nuevo], playNext);
+      const despues = () => (nuevo ? ponMensajes([nuevo], playNext) : playNext());
+      if (!JINGLES.length) {
+        if (nuevo) songsSinceJingle = 0;
+        return despues();
       }
-      if (!JINGLES.length) return playNext();
       songsSinceJingle = 0;
       jingle.src = JINGLES[jinglesPlayed++ % JINGLES.length];
       try {
@@ -275,7 +275,7 @@ export function RadioPlayer({ tracks, thanks, cadena, cadenas }: { tracks: Radio
         jingleReady = true;
         // Once a jingle is over, one of the page's characters crosses (Paseo.tsx)
         window.dispatchEvent(new Event("radio:cortinilla"));
-        playNext();
+        despues();
       };
       // A jingle that can't play must not stop the radio
       const forced = jingleForced;
@@ -293,7 +293,7 @@ export function RadioPlayer({ tracks, thanks, cadena, cadenas }: { tracks: Radio
     }
 
     // El buzón de la portada (MensajeBuzon.tsx). Cada mensaje aprobado suena una vez en antena
-    // en el hueco de una cortinilla, y todos se pueden escuchar cuando uno quiera
+    // justo después de una cortinilla, y todos se pueden escuchar cuando uno quiera
     let buzonList: { id: string; at: string }[] = [];
     let oidos = new Set<string>();
     try {

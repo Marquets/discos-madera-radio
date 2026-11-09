@@ -3,6 +3,7 @@ import type { Player, Progress, RadioTrack } from "./RadioPlayer";
 type YTPlayer = {
   loadVideoById(opts: { videoId: string; startSeconds: number }): void;
   playVideo(): void;
+  pauseVideo(): void;
   stopVideo(): void;
   getPlayerState(): number;
   getCurrentTime(): number;
@@ -83,6 +84,7 @@ export async function createYoutubePlayer(el: HTMLElement, on: { ready(): void; 
       else player.stopVideo();
     },
     play: () => player.playVideo(),
+    pause: () => player.pauseVideo(),
     setVolume(v: number) {
       volume = v;
       if (ready) player.setVolume(v);

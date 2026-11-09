@@ -13,3 +13,9 @@ export const JINGLES: string[] = [
 
 /** A jingle plays after every this many songs */
 export const JINGLE_EVERY = 3;
+
+/**
+ * La cortinilla que presenta los mensajes del buzón de voz (MensajeBuzon.tsx), en antena y al
+ * escucharlos desde la portada; null mientras no haya, y entonces suenan sin presentación.
+ */
+export const BUZON_INTRO: string | null = null;

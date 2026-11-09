@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { MAX_LENGTH } from "@/lib/messages";
 import { getTracks } from "@/lib/sync";
+import { MensajeBuzon } from "./MensajeBuzon";
 import { Mensajes } from "./Mensajes";
 import { Paseo } from "./Paseo";
 import { Salvapantallas } from "./Salvapantallas";
@@ -29,6 +30,8 @@ export default async function Home() {
               reproductor. Alto fijo porque el iframe no vive dentro, mide 80px. */}
           <div id="reproductor" className="mx-auto mt-6 h-20 w-full max-w-md" />
           <Mensajes maxLength={MAX_LENGTH} />
+          {/* El buzón de voz, abajo a la derecha, frente a los mensajes escritos */}
+          <MensajeBuzon />
           <Salvapantallas />
         </div>
       )}

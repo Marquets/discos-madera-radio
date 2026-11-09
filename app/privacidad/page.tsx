@@ -13,6 +13,10 @@ export default function PrivacidadPage() {
       <h2 className="font-display text-3xl uppercase">Lo que guarda la web</h2>
       <ul className="flex list-disc flex-col gap-2 pl-5">
         <li>Los mensajes que dejas en la portada: el texto y la hora. Se borran solos a los 7 días.</li>
+        <li>
+          Los mensajes de voz que dejas en el buzón: la grabación, de hasta 30 segundos, y la hora. Los puede escuchar cualquiera en la web y suenan en la radio. Se borran solos a los 7
+          días, y podemos borrar antes el que no deba estar. El micrófono solo se usa mientras grabas.
+        </li>
         <li>Los temas que añades en Pon un tema, con el nombre que escribas, si escribes uno. Se ven en la radio.</li>
         <li>
           Tu dirección IP solo se usa un momento, en memoria, para que no se pueda enviar muchas veces seguidas. No se guarda. El alojamiento (Netlify) puede registrarla en sus

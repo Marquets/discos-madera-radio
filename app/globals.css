@@ -610,7 +610,7 @@ html[data-salvapantallas] {
   overflow: hidden;
   cursor: none;
 
-  & :is(.ticker, header nav, .mensajes-form, .mensajes-lista) {
+  & :is(.ticker, header nav, .mensajes-form, .mensajes-lista, .buzon-voz, .info-radio) {
     opacity: 0;
     pointer-events: none;
   }
@@ -624,7 +624,9 @@ html[data-salvapantallas] {
 .ticker,
 header nav,
 .mensajes-form,
-.mensajes-lista {
+.mensajes-lista,
+.buzon-voz,
+.info-radio {
   transition: opacity 1.5s ease;
 }
 
@@ -671,4 +673,16 @@ header nav,
   header a[href="/"] {
     transition: margin-top 1.5s ease;
   }
+}
+
+/* El panel de información (Info.tsx): barra de scroll fina en el color de la cadena y sin carril,
+   y un degradado abajo mientras queda texto por leer, que se va al llegar al final */
+#info-radio {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-accent) transparent;
+  overscroll-behavior: contain;
+  background:
+    linear-gradient(var(--color-black), var(--color-black)) bottom / 100% 2rem no-repeat local,
+    linear-gradient(transparent, color-mix(in srgb, var(--color-accent) 25%, transparent)) bottom / 100% 2rem no-repeat scroll,
+    var(--color-black);
 }

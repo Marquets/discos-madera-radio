@@ -4,8 +4,10 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import type { CadenaPublica } from "@/lib/cadenas";
 import type { Energy } from "@/lib/franjas";
-import { JINGLE_EVERY, JINGLES } from "@/lib/jingles";
+import { PITIDO, tienes } from "@/lib/buzon-reglas";
+import { BUZON_INTRO, JINGLE_EVERY, JINGLES } from "@/lib/jingles";
 import { nowPlaying } from "@/lib/schedule";
+import { BUZON_NUEVO, cambiarBuzon, ESCUCHAR } from "./buzonEstado";
 import { CambiaCadena } from "./CambiaCadena";
 import { useStored } from "./useStored";
 import { createYoutubePlayer } from "./youtubePlayer";
@@ -30,6 +32,8 @@ export type Progress = { isPaused: boolean; position: number; duration: number; 
 export type Player = {
   load(track: RadioTrack, startAt: number): void;
   play(): void;
+  /** For the buzón, heard in the middle of a song */
+  pause(): void;
   setVolume?(volume: number): void;
   setMuted?(muted: boolean): void;
   destroy(): void;
@@ -38,6 +42,7 @@ export type Player = {
 type EmbedController = {
   loadUri(uri: string, preferVideo: boolean, startAt: number): void;
   play(): void;
+  pause(): void;
   // playback_started is the only way to know the browser actually let us play:
   // the API has no autoplay-blocked event, and play() reports nothing back
   addListener(event: "ready" | "playback_started", handler: () => void): void;
@@ -67,6 +72,10 @@ const SOURCE_KEY = "radio-source";
 const VOLUME_KEY = "radio-volume";
 const JINGLE_KEY = "radio-cortinilla";
 const ANIM_KEY = "radio-animacion";
+// Cada cuánto se mira si hay mensajes nuevos en el buzón
+const BUZON_POLL_MS = 2 * 60_000;
+// Los mensajes del buzón que este navegador ya ha oído, para no repetirlos en antena
+const OIDOS_KEY = "radio-buzon-oidos";
 // The logo's animations while a jingle plays, one per jingle in this order; globals.css has each one
 const LOGO_ANIMS = ["baile", "ondas", "cinta", "neon", "glitch", "dibujo", "dibus"];
 
@@ -87,6 +96,8 @@ export function RadioPlayer({ tracks, thanks, cadena, cadenas }: { tracks: Radio
   const container = useRef<HTMLDivElement>(null);
   const controller = useRef<Player>(null);
   const [source, setSource] = useState<"spotify" | "youtube">("spotify");
+  // Mientras suena un mensaje del buzón, que el ticker lo diga
+  const [buzon, setBuzon] = useState(false);
   // Bumped by the Spotify/YouTube switch, so the player is rebuilt with the new choice
   const [choice, setChoice] = useState(0);
   // On a phone the player docks at the bottom of every page but the front one, and folds away
@@ -204,6 +215,9 @@ export function RadioPlayer({ tracks, thanks, cadena, cadenas }: { tracks: Radio
     function playAt(index: number, startAt: number) {
       // Re-tuning after a blocked autoplay would otherwise leave two chains running
       clearTimeout(timer.current);
+      buzonRun++;
+      setBuzon(false);
+      cambiarBuzon({ escuchando: false });
       jingle.pause();
       showJingle(false);
       // So the new song's first "paused at 0" report isn't taken for the end of the old one
@@ -244,7 +258,14 @@ export function RadioPlayer({ tracks, thanks, cadena, cadenas }: { tracks: Radio
         if (tracks[np.index].id === playingId) np = nowPlaying(tracks, Date.now() + (tracks[np.index].durationSec - np.offsetSec) * 1000 + 1)!;
         playAt(np.index, 0);
       };
-      if (!JINGLES.length || ++songsSinceJingle < JINGLE_EVERY || (document.hidden && !jingleReady)) return playNext();
+      if (++songsSinceJingle < JINGLE_EVERY || (document.hidden && !jingleReady)) return playNext();
+      // El hueco de la cortinilla es para un mensaje del buzón que aquí aún no se haya oído
+      const nuevo = buzonList.find((m) => !oidos.has(m.id));
+      if (nuevo) {
+        songsSinceJingle = 0;
+        return ponMensajes([nuevo], playNext);
+      }
+      if (!JINGLES.length) return playNext();
       songsSinceJingle = 0;
       jingle.src = JINGLES[jinglesPlayed++ % JINGLES.length];
       try {
@@ -271,6 +292,115 @@ export function RadioPlayer({ tracks, thanks, cadena, cadenas }: { tracks: Radio
       setPlaying(true);
     }
 
+    // El buzón de la portada (MensajeBuzon.tsx). Cada mensaje aprobado suena una vez en antena
+    // en el hueco de una cortinilla, y todos se pueden escuchar cuando uno quiera
+    let buzonList: { id: string; at: string }[] = [];
+    let oidos = new Set<string>();
+    try {
+      oidos = new Set(JSON.parse(localStorage.getItem(OIDOS_KEY) ?? "[]"));
+    } catch {}
+    const oido = (id: string) => {
+      oidos.add(id);
+      try {
+        // Solo los que siguen en el buzón: los demás ya se han borrado
+        localStorage.setItem(OIDOS_KEY, JSON.stringify([...oidos].filter((o) => buzonList.some((m) => m.id === o))));
+      } catch {}
+    };
+    const refreshBuzon = () =>
+      fetch("/api/buzon")
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d: { audios: typeof buzonList } | null) => {
+          if (!d || cancelled) return;
+          buzonList = d.audios;
+          cambiarBuzon({ mensajes: buzonList.length });
+        })
+        .catch(() => {});
+    refreshBuzon();
+    const buzonPoll = setInterval(refreshBuzon, BUZON_POLL_MS);
+    let buzonRun = 0;
+    let escuchando = false;
+
+    /**
+     * Los mensajes como en un contestador: la cortinilla del buzón si la hay, "Tienes N mensajes"
+     * y un pitido antes de cada uno; luego alAcabar
+     */
+    function ponMensajes(mensajes: { id: string }[], alAcabar: () => void, radioSonando = true) {
+      const clips = [...(BUZON_INTRO ? [BUZON_INTRO] : []), tienes(mensajes.length), ...mensajes.flatMap((m) => [PITIDO, `/api/buzon/${m.id}`])];
+      const run = ++buzonRun;
+      escuchando = true;
+      setBuzon(true);
+      cambiarBuzon({ escuchando: true });
+      // The song player is paused now, which would bring back the ▶ button mid-message
+      if (radioSonando) setPlaying(true);
+      let i = 0;
+      let shown = false;
+      const done = () => {
+        if (run !== buzonRun) return;
+        jingle.onended = jingle.onerror = null;
+        jingleReady = true;
+        escuchando = false;
+        setBuzon(false);
+        cambiarBuzon({ escuchando: false });
+        showJingle(false);
+        alAcabar();
+      };
+      const play = () => {
+        if (run !== buzonRun || cancelled) return;
+        if (i >= clips.length) return done();
+        const n = ++i;
+        const src = clips[n - 1];
+        jingle.src = src;
+        // Uno que no carga no para la radio: pasa al siguiente. Un fallo llega a la vez por
+        // onerror y por play(), y solo debe avanzar uno
+        const siguiente = () => i === n && play();
+        jingle.onended = jingle.onerror = siguiente;
+        jingle.play().then(
+          () => {
+            // El logo baila con una sola animación por todos los mensajes
+            if (!shown) showJingle(true);
+            shown = true;
+            const m = mensajes.find((x) => src.endsWith(x.id));
+            if (m) oido(m.id);
+          },
+          // Si el navegador no deja sonar el primero, tampoco dejará los demás
+          (e: DOMException) => (n === 1 && e.name === "NotAllowedError" ? done() : siguiente()),
+        );
+      };
+      play();
+    }
+
+    // El botón de escuchar de la portada: todos los mensajes, del más nuevo al más viejo. Si la
+    // radio sonaba la pausa, y al acabar vuelve a sintonizarla con el reloj; pulsado otra vez, para
+    const escucharBuzon = () => {
+      const sintonizada = playingId !== null;
+      // Spotify tarda un par de segundos en volver, y entretanto el ticker no debe pedir ▶
+      const volver = () => {
+        setPlaying(true);
+        playScheduled();
+      };
+      if (escuchando) {
+        buzonRun++;
+        escuchando = false;
+        jingle.pause();
+        jingle.onended = jingle.onerror = null;
+        showJingle(false);
+        setBuzon(false);
+        cambiarBuzon({ escuchando: false });
+        if (sintonizada) volver();
+        return;
+      }
+      if (!buzonList.length) return;
+      // Pausada desde los controles de Spotify o YouTube cuenta como apagada
+      const sonaba = sintonizada && (!jingle.paused || !progress.current?.isPaused);
+      if (sonaba) {
+        clearTimeout(timer.current);
+        controller.current?.pause();
+      }
+      ponMensajes(buzonList.toReversed(), () => (sonaba ? volver() : setPlaying(false)), sonaba);
+    };
+    window.addEventListener(ESCUCHAR, escucharBuzon);
+    window.addEventListener(BUZON_NUEVO, refreshBuzon);
+
     function playScheduled() {
       const np = nowPlaying(tracksRef.current, Date.now())!;
       playAt(np.index, Math.floor(np.offsetSec));
@@ -278,7 +408,17 @@ export function RadioPlayer({ tracks, thanks, cadena, cadenas }: { tracks: Radio
     // ?cortinilla in the address plays a jingle right away instead of waiting for it, to try them out
     let forceJingle = JINGLES.length > 0 && new URLSearchParams(location.search).has("cortinilla");
     let jingleForced = false;
+    // ?buzon pone al sintonizar el último mensaje del buzón, como en antena, para probarlo
+    let forceBuzon = new URLSearchParams(location.search).has("buzon");
     function start() {
+      if (forceBuzon) {
+        forceBuzon = false;
+        return void refreshBuzon().then(() => {
+          const ultimo = buzonList.at(-1);
+          if (ultimo) ponMensajes([ultimo], playScheduled);
+          else playScheduled();
+        });
+      }
       if (!forceJingle) return playScheduled();
       forceJingle = false;
       jingleForced = true;
@@ -351,7 +491,7 @@ export function RadioPlayer({ tracks, thanks, cadena, cadenas }: { tracks: Radio
         setSource("spotify");
         const first = nowPlaying(tracksRef.current, Date.now())!;
         api.createController(target, { uri: tracksRef.current[first.index].spotifyUri, width: "100%", height: 80, theme: "dark" }, (c) => {
-          controller.current = { load: (t, startAt) => c.loadUri(t.spotifyUri, false, startAt), play: () => c.play(), destroy: () => c.destroy() };
+          controller.current = { load: (t, startAt) => c.loadUri(t.spotifyUri, false, startAt), play: () => c.play(), pause: () => c.pause(), destroy: () => c.destroy() };
           // The only signal the browser actually let us play; play() itself reports nothing
           c.addListener("playback_started", () => setPlaying(true));
           c.addListener("playback_update", (e) => onProgress(e.data));
@@ -362,6 +502,11 @@ export function RadioPlayer({ tracks, thanks, cadena, cadenas }: { tracks: Radio
 
     return () => {
       cancelled = true;
+      buzonRun++;
+      clearInterval(buzonPoll);
+      window.removeEventListener(ESCUCHAR, escucharBuzon);
+      window.removeEventListener(BUZON_NUEVO, refreshBuzon);
+      cambiarBuzon({ escuchando: false });
       clearTimeout(timer.current);
       jingle.pause();
       showJingle(false);
@@ -377,6 +522,8 @@ export function RadioPlayer({ tracks, thanks, cadena, cadenas }: { tracks: Radio
   const gracias = thanks.length ? ` · Gracias a ${thanks.join(", ")}` : "";
   const ticker = live
     ? "Live · Directos del colectivo Discos Madera"
+    : buzon
+      ? "El buzón de Discos Madera · Mensajes de voz de los oyentes · Deja el tuyo con el micro de la portada"
     : !tracks.length
       ? "Todavía no suena nada · Añade la primera canción a la playlist"
       : playing && track

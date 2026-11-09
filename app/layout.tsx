@@ -7,6 +7,7 @@ import { cadenaActual, enAntena, publicas } from "@/lib/cadenas-server";
 import { recentContributors } from "@/lib/contributors";
 import { getTracks } from "@/lib/sync";
 import { CortinillaDibus } from "./CortinillaDibus";
+import { Info } from "./Info";
 import { Logo } from "./Logo";
 import { NavLinks } from "./NavLinks";
 import { Nieve } from "./Nieve";
@@ -63,12 +64,14 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           </Suspense>
           <header className="grid grid-cols-[1fr_auto_1fr] items-center gap-4 px-4 pb-6 pt-4 font-display text-xl uppercase leading-none sm:items-start sm:px-8 sm:text-2xl">
             {/* Equal 1fr side columns keep the logo centred however wide the menu side grows;
-                the channel switch lives up in the ticker (RadioPlayer). */}
+                the channel switch lives up in the ticker (RadioPlayer), and the right one
+                holds the info button, level with the menu. */}
             <NavLinks cadenas={publicas()} />
             <Link href="/" className="flex flex-col items-center gap-1">
               <Logo className="h-14 w-auto sm:h-20" />
               <span className="font-mono text-xs tracking-[0.5em] sm:text-sm">Radio</span>
             </Link>
+            <Info />
           </header>
         </div>
         <main>{children}</main>

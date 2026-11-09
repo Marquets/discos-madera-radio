@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { quienLoTrajo } from "@/lib/contributors";
 import { ENERGY, type Energy } from "@/lib/franjas";
 import { nowPlaying } from "@/lib/schedule";
@@ -103,20 +103,29 @@ function tapeTangent(pack: Point, packR: number, post: Point, postR: number, sid
   ];
 }
 
+/** Un sector de corona, de a0 a a1 grados, entre los radios r1 y r2 */
+function sector(a0: number, a1: number, r1: number, r2: number) {
+  const p = (a: number, r: number) => `${(r * Math.cos((a * Math.PI) / 180)).toFixed(2)} ${(r * Math.sin((a * Math.PI) / 180)).toFixed(2)}`;
+  return `M${p(a0, r2)}A${r2} ${r2} 0 0 1 ${p(a1, r2)}L${p(a1, r1)}A${r1} ${r1} 0 0 0 ${p(a0, r1)}Z`;
+}
+
+/** A reel with three windows in its flange, the tape pack showing through them, and a plain hub */
 function Reel({ cx, tape, angle }: { cx: number; tape: number; angle: number }) {
+  const id = useId();
   return (
     <g transform={`translate(${cx} 160)`}>
-      <circle r="95" fill="none" stroke={CREAM} strokeWidth="3" />
+      <circle r="93" fill="var(--color-black)" />
       <circle r={tape} fill={TAPE} />
       <g transform={`rotate(${angle})`}>
-        <line y1="-95" y2="-52" stroke={CREAM} strokeWidth="3" />
-        <line y1="52" y2="95" stroke={CREAM} strokeWidth="3" />
-        <circle r="50" fill={CREAM} />
-        <circle r="24" fill="var(--color-black)" />
-        {[0, 120, 240].map((a) => (
-          <rect key={a} x="-3" y="-32" width="6" height="12" fill="var(--color-black)" transform={`rotate(${a})`} />
-        ))}
-        <circle r="5" fill={CREAM} />
+        <mask id={id}>
+          <circle r="95" fill="white" />
+          {[0, 120, 240].map((a) => (
+            <path key={a} d={sector(a + 22, a + 98, 39, 86)} fill="black" stroke="black" strokeWidth="9" strokeLinejoin="round" />
+          ))}
+        </mask>
+        <circle r="95" fill={CREAM} mask={`url(#${id})`} />
+        <circle r="13" fill="var(--color-black)" />
+        <circle r="4" fill={CREAM} />
       </g>
     </g>
   );

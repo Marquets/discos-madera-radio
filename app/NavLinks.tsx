@@ -78,7 +78,7 @@ export function NavLinks({ cadenas }: { cadenas: CadenaPublica[] }) {
             </Link>
           </li>
         ))}
-        {/* On a phone the channel switch has no room beside the logo, so it comes in here */}
+        {/* On a phone the ticker has no room for the channel switch, so it comes in here */}
         {cambia && (
           <li
             style={{ transitionDelay: open ? `${LINKS.length * 70}ms` : "0ms" }}

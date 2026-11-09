@@ -7,6 +7,8 @@ vi.hoisted(() => {
   process.env.SPOTIFY_PLAYLIST_ID = "lista";
 });
 vi.mock("next/headers", () => ({ cookies: async () => ({ has: () => false, get: () => undefined }) }));
+// cadenaActual waits for a real request, and a test has none
+vi.mock("next/server", async (original) => ({ ...(await original<typeof import("next/server")>()), connection: async () => {} }));
 
 const { POST } = await import("./route");
 

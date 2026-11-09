@@ -3,10 +3,9 @@ import { Anton, Space_Mono } from "next/font/google";
 import Link from "next/link";
 import { Suspense } from "react";
 import { abiertas, COOKIE, COOKIE_VER, elegirCadena } from "@/lib/cadenas";
-import { enAntena, publicas } from "@/lib/cadenas-server";
+import { cadenaActual, enAntena, publicas } from "@/lib/cadenas-server";
 import { recentContributors } from "@/lib/contributors";
 import { getTracks } from "@/lib/sync";
-import { CambiaCadena } from "./CambiaCadena";
 import { CortinillaDibus } from "./CortinillaDibus";
 import { Logo } from "./Logo";
 import { NavLinks } from "./NavLinks";
@@ -28,8 +27,9 @@ export const metadata: Metadata = {
 export const viewport: Viewport = { themeColor: "#000000" };
 
 async function OnAir() {
-  const tracks = (await getTracks()).toSorted((a, b) => a.firstSeenAt.localeCompare(b.firstSeenAt));
-  return <RadioPlayer tracks={tracks} thanks={recentContributors(tracks)} />;
+  const [onAir, cadena] = await Promise.all([getTracks(), cadenaActual()]);
+  const tracks = onAir.toSorted((a, b) => a.firstSeenAt.localeCompare(b.firstSeenAt));
+  return <RadioPlayer tracks={tracks} thanks={recentContributors(tracks)} cadena={cadena.id} cadenas={publicas()} />;
 }
 
 /**
@@ -62,14 +62,13 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             <OnAir />
           </Suspense>
           <header className="grid grid-cols-[1fr_auto_1fr] items-center gap-4 px-4 pb-6 pt-4 font-display text-xl uppercase leading-none sm:items-start sm:px-8 sm:text-2xl">
-            {/* Equal 1fr side columns keep the logo centred however wide the sides grow; the
-                right one holds the channel switch, when there's more than one. */}
+            {/* Equal 1fr side columns keep the logo centred however wide the menu side grows;
+                the channel switch lives up in the ticker (RadioPlayer). */}
             <NavLinks cadenas={publicas()} />
             <Link href="/" className="flex flex-col items-center gap-1">
               <Logo className="h-14 w-auto sm:h-20" />
               <span className="font-mono text-xs tracking-[0.5em] sm:text-sm">Radio</span>
             </Link>
-            <CambiaCadena cadenas={publicas()} className="justify-self-end text-sm max-sm:hidden" />
           </header>
         </div>
         <main>{children}</main>

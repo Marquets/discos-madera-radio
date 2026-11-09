@@ -610,7 +610,7 @@ html[data-salvapantallas] {
   overflow: hidden;
   cursor: none;
 
-  & :is(.ticker, header nav, header [role="group"], .mensajes-form, .mensajes-lista) {
+  & :is(.ticker, header nav, .mensajes-form, .mensajes-lista) {
     opacity: 0;
     pointer-events: none;
   }
@@ -623,7 +623,6 @@ html[data-salvapantallas] {
 
 .ticker,
 header nav,
-header [role="group"],
 .mensajes-form,
 .mensajes-lista {
   transition: opacity 1.5s ease;
@@ -632,7 +631,7 @@ header [role="group"],
 /* En el salvapantallas el conjunto crece hasta donde deja la pantalla. --deck-w es el ancho
    del magnetófono, que mide de alto 0.356 veces su ancho (su viewBox, 736 × 262). Lo demás
    del conjunto mide unos 16.5rem con Spotify (logo grande, "Radio", márgenes y los 80px del
-   reproductor) y otros 17.25rem más con el vídeo de YouTube encima; sobre el logo quedan
+   reproductor) y otros 12.75rem más con el vídeo de YouTube encima; sobre el logo quedan
    3.25rem. --logo-drop lo centra en la pantalla, como fuera del salvapantallas. */
 @media (min-width: 640px) {
   html[data-salvapantallas] {
@@ -640,8 +639,14 @@ header [role="group"],
     --logo-drop: max(1rem, calc((100svh - 16.5rem - var(--deck-w) * 0.356) / 2 - 3.25rem));
 
     & body:has(#radio[data-source="youtube"]) {
-      --deck-w: min(64vw, calc((100svh - 38.25rem) / 0.356));
-      --logo-drop: max(1rem, calc((100svh - 33.75rem - var(--deck-w) * 0.356) / 2 - 3.25rem));
+      --deck-w: min(64vw, calc((100svh - 33.75rem) / 0.356));
+      --logo-drop: max(1rem, calc((100svh - 29.25rem - var(--deck-w) * 0.356) / 2 - 3.25rem));
+    }
+
+    /* El vídeo encoge a 20rem (11.25rem de alto) para que el magnetófono crezca como con
+       Spotify; el reproductor va anclado al hueco y lo sigue sin recargarse */
+    & body:has(#radio[data-source="youtube"]) #reproductor {
+      max-width: 20rem;
     }
 
     & header a[href="/"] svg {

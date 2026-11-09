@@ -2,9 +2,11 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import type { CadenaPublica } from "@/lib/cadenas";
 import type { Energy } from "@/lib/franjas";
 import { JINGLE_EVERY, JINGLES } from "@/lib/jingles";
 import { nowPlaying } from "@/lib/schedule";
+import { CambiaCadena } from "./CambiaCadena";
 import { useStored } from "./useStored";
 import { createYoutubePlayer } from "./youtubePlayer";
 
@@ -80,7 +82,8 @@ function loadSpotifyApi() {
   return spotifyApi;
 }
 
-export function RadioPlayer({ tracks, thanks }: { tracks: RadioTrack[]; thanks: string[] }) {
+/** `cadena` is the channel the server picked these tracks from: a switch rebuilds the player on the new list */
+export function RadioPlayer({ tracks, thanks, cadena, cadenas }: { tracks: RadioTrack[]; thanks: string[]; cadena: string; cadenas: CadenaPublica[] }) {
   const container = useRef<HTMLDivElement>(null);
   const controller = useRef<Player>(null);
   const [source, setSource] = useState<"spotify" | "youtube">("spotify");
@@ -366,7 +369,9 @@ export function RadioPlayer({ tracks, thanks }: { tracks: RadioTrack[]; thanks: 
       setPlaying(false);
       setCurrent(null);
     };
-  }, [hasTracks, choice, live]);
+    // A new channel brings a whole new list (CambiaCadena's refresh), so the player starts
+    // over on it instead of finishing the song first; tracksRef is up to date by now
+  }, [hasTracks, choice, live, cadena]);
 
   const track = tracks.find((t) => t.id === current) ?? null;
   const gracias = thanks.length ? ` · Gracias a ${thanks.join(", ")}` : "";
@@ -397,6 +402,10 @@ export function RadioPlayer({ tracks, thanks }: { tracks: RadioTrack[]; thanks: 
             ))}
           </div>
         </div>
+        {/* The channel switch rides here beside the source one; a phone has no room, so its
+            menu carries it instead (NavLinks) */}
+        {/* Dial dots and a hairline set it apart from the Spotify / YouTube pills beside it */}
+        <CambiaCadena cadenas={cadenas} estilo="dial" className="ml-4 border-r border-accent/30 pr-3 text-xs max-sm:hidden" />
         {/* Phones always play YouTube, so they get no switch */}
         {!live && tracks.some((t) => t.youtubeId) && (
           <div role="group" aria-label="Escuchar con" className="flex gap-1 pl-4 text-xs pointer-coarse:hidden max-sm:hidden">

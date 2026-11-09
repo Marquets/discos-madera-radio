@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { connection } from "next/server";
 import { abiertas, CADENAS, COOKIE, COOKIE_VER, elegirCadena, hoyEnMadrid, type Cadena, type CadenaId, type CadenaPublica } from "./cadenas";
 
 /** Each channel's playlist, from the environment. A channel without a playlist is off air. */
@@ -18,8 +19,12 @@ export const enAntena = (): CadenaEnAntena[] =>
 
 export const publicas = (): CadenaPublica[] => enAntena().map(({ id, nombre, temporada, nieve, themeColor }) => ({ id, nombre, temporada, nieve, themeColor }));
 
-/** The channel this request plays, by the same rule the browser's inline script uses for the colours */
+/**
+ * The channel this request plays, by the same rule the browser's inline script uses for the colours.
+ * Waits for a real request first: it reads today's date, which a prerender can't fix in place.
+ */
 export async function cadenaActual(): Promise<CadenaEnAntena> {
+  await connection();
   const jar = await cookies();
   const hoy = hoyEnMadrid();
   const cadenas = abiertas(enAntena(), hoy, jar.has(COOKIE_VER));

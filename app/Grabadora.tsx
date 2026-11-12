@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { MAX_SEC, MAX_SUBIDA, REVISAR } from "@/lib/buzon-reglas";
 import { BUZON_NUEVO } from "./buzonEstado";
 
-type Estado = { fase: "pidiendo" } | { fase: "sinMicro" } | { fase: "grabando"; desde: number } | { fase: "lista"; audio: Blob; url: string } | { fase: "enviando"; audio: Blob; url: string };
+type Estado = { fase: "elegir" } | { fase: "pidiendo" } | { fase: "grabando"; desde: number } | { fase: "lista"; audio: Blob; url: string } | { fase: "enviando"; audio: Blob; url: string };
 
 // Opus en WebM donde se puede (Chrome, Firefox), AAC en MP4 en Safari; los dos suenan en todos
 const TIPOS = ["audio/webm;codecs=opus", "audio/mp4", "audio/ogg;codecs=opus"];
@@ -30,11 +30,11 @@ export function Microfono({ className = "" }: { className?: string }) {
 const reloj = (s: number) => `0:${String(Math.max(0, Math.ceil(s))).padStart(2, "0")}`;
 
 /**
- * Graba un mensaje de hasta MAX_SEC segundos para el buzón, deja oírlo y lo manda. Empieza a
- * grabar nada más abrirse: el botón que la abre ya dice lo que va a pasar.
+ * Graba un mensaje de hasta MAX_SEC segundos para el buzón, o sube uno ya grabado de hasta
+ * MAX_SUBIDA, deja oírlo y lo manda.
  */
 export function Grabadora({ onClose, onStatus }: { onClose: () => void; onStatus: (s: string) => void }) {
-  const [estado, setEstado] = useState<Estado>({ fase: "pidiendo" });
+  const [estado, setEstado] = useState<Estado>({ fase: "elegir" });
   const [ahora, setAhora] = useState(0);
   const recorder = useRef<MediaRecorder>(null);
   const escucha = useRef<HTMLAudioElement>(null);
@@ -44,10 +44,12 @@ export function Grabadora({ onClose, onStatus }: { onClose: () => void; onStatus
   const abierta = useRef(true);
 
   async function grabar() {
+    setEstado({ fase: "pidiendo" });
+    onStatus("");
     // La radio sigue sonando mientras hablas; la cancelación de eco la quita de la grabación
     const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } }).catch(() => {
       onStatus("Sin permiso para usar el micrófono; puedes subir un audio");
-      setEstado({ fase: "sinMicro" });
+      setEstado({ fase: "elegir" });
       return null;
     });
     if (!stream) return;
@@ -93,7 +95,6 @@ export function Grabadora({ onClose, onStatus }: { onClose: () => void; onStatus
         URL.revokeObjectURL(url);
         return onStatus(`Tiene que durar ${MAX_SUBIDA} s como mucho`);
       }
-      cortar();
       onStatus("");
       setEstado({ fase: "lista", audio: file, url });
     };
@@ -104,15 +105,12 @@ export function Grabadora({ onClose, onStatus }: { onClose: () => void; onStatus
     a.src = url;
   }
 
-  // Abrirla es empezar a grabar
   useEffect(() => {
     abierta.current = true;
-    grabar();
     return () => {
       abierta.current = false;
       cortar();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // La cuenta atrás, y el corte a los MAX_SEC segundos
@@ -163,11 +161,22 @@ export function Grabadora({ onClose, onStatus }: { onClose: () => void; onStatus
   return (
     <div role="group" aria-label="Buzón de voz" onKeyDown={(e) => e.key === "Escape" && onClose()} className="flex flex-wrap items-center gap-2">
       {estado.fase === "pidiendo" && <span className="py-1.5">Abriendo el micrófono…</span>}
-      {(estado.fase === "pidiendo" || estado.fase === "grabando" || estado.fase === "sinMicro") && (
-        <label className={`cursor-pointer border border-accent focus-within:text-white ${boton}`}>
-          Subir audio
-          <input type="file" accept="audio/*" className="sr-only" onChange={(e) => e.target.files?.[0] && subir(e.target.files[0])} />
-        </label>
+      {estado.fase === "elegir" && (
+        <>
+          <button autoFocus onClick={grabar} className="flex items-center gap-2 bg-accent px-3 py-1.5 font-bold text-black hover:bg-white">
+            <span aria-hidden className="size-2 rounded-full bg-red-600" />
+            Grabar
+          </button>
+          <label className={`cursor-pointer border border-accent focus-within:text-white ${boton}`}>
+            Subir audio
+            <input type="file" accept="audio/*" className="sr-only" onChange={(e) => {
+                const file = e.target.files?.[0];
+                // Así se puede volver a elegir el mismo archivo
+                e.target.value = "";
+                if (file) subir(file);
+              }} />
+          </label>
+        </>
       )}
       {estado.fase === "grabando" && (
         <>
@@ -188,9 +197,8 @@ export function Grabadora({ onClose, onStatus }: { onClose: () => void; onStatus
           </button>
           <button
             onClick={() => {
-              setEstado({ fase: "pidiendo" });
+              setEstado({ fase: "elegir" });
               onStatus("");
-              grabar();
             }}
             disabled={estado.fase === "enviando"} className={boton}>
             Otra vez

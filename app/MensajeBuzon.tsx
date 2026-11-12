@@ -67,7 +67,7 @@ export function MensajeBuzon() {
                 setStatus("");
                 setGrabando(true);
               }}
-              aria-label="Grabar un mensaje para el buzón"
+              aria-label="Dejar un mensaje en el buzón"
               title={`Graba un mensaje para el buzón (${MAX_SEC} s) o sube uno (${MAX_SUBIDA} s)`}
               className={redondo}
             >

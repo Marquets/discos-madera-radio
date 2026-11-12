@@ -2,7 +2,8 @@ import { MAX_SEMANA, REVISAR } from "./buzon-reglas";
 import { blobs, withinTimeout } from "./db";
 
 /**
- * El buzón de voz de la portada: mensajes de hasta 30 segundos para la radio. Entran aprobados,
+ * El buzón de voz de la portada: mensajes de hasta 30 segundos para la radio
+ * (60 si se sube un audio ya grabado). Entran aprobados,
  * o esperan a que alguien los apruebe si REVISAR (buzon-reglas.ts); los aprobados se pueden
  * escuchar desde la portada y suenan en antena detrás de una cortinilla. Todos se borran a la
  * semana de grabarse.
@@ -14,8 +15,9 @@ import { blobs, withinTimeout } from "./db";
  */
 export type Audio = { id: string; at: string; type: string; aprobado: boolean };
 
-// 30 s de Opus a 64 kbps son unos 240 KB; Safari graba AAC y no siempre hace caso al bitrate
-export const MAX_BYTES = 1_000_000;
+// 30 s de Opus a 64 kbps son unos 240 KB; Safari graba AAC y no siempre hace caso al bitrate, y
+// un MP3 subido de 60 s a 160 kbps son 1,2 MB
+export const MAX_BYTES = 2_000_000;
 export const COOLDOWN_MS = 5 * 60_000;
 export const MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 // Con tantos esperando revisión (o, sin revisión, tantos en la semana) se deja de aceptar, para

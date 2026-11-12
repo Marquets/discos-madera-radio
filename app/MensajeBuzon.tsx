@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { escucharBuzon, useBuzon } from "./buzonEstado";
+import { MAX_SEC, MAX_SUBIDA } from "@/lib/buzon-reglas";
 import { Grabadora, Microfono, usePuedeGrabar } from "./Grabadora";
 
 function Cascos({ className = "" }: { className?: string }) {
@@ -67,7 +68,7 @@ export function MensajeBuzon() {
                 setGrabando(true);
               }}
               aria-label="Grabar un mensaje para el buzón"
-              title="Graba un mensaje para el buzón (30 s)"
+              title={`Graba un mensaje para el buzón (${MAX_SEC} s) o sube uno (${MAX_SUBIDA} s)`}
               className={redondo}
             >
               <Microfono className="size-5" />

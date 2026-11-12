@@ -1,8 +1,8 @@
-import { MAX_SEC, REVISAR } from "@/lib/buzon-reglas";
+import { MAX_SEC, MAX_SUBIDA, REVISAR } from "@/lib/buzon-reglas";
 
 // Solo lo nuevo de estas semanas; lo de siempre (los mensajes escritos, las cortinillas) no
 const QUE = [
-  { titulo: "Buzón de voz", texto: `Con el micro de abajo a la derecha grabas un mensaje de hasta ${MAX_SEC} segundos para la radio.${REVISAR ? " Lo escuchamos antes de publicarlo." : ""} Se borra a la semana.` },
+  { titulo: "Buzón de voz", texto: `Con el micro de abajo a la derecha grabas un mensaje de hasta ${MAX_SEC} segundos para la radio, o subes uno ya grabado de hasta ${MAX_SUBIDA}.${REVISAR ? " Lo escuchamos antes de publicarlo." : ""} Se borra a la semana.` },
   { titulo: "Escucha el buzón", texto: "Los cascos ponen los mensajes de la semana. Si la radio sonaba, se pausa y vuelve al terminar. Cada mensaje suena además una vez en antena, después de una cortinilla." },
   { titulo: "Pon un tema", texto: "Busca una canción y añádela a la playlist desde la web, con tu nombre si quieres. Entra en la radio enseguida." },
   { titulo: "¿Quién la trajo?", texto: "De vez en cuando se abre un ojo en el cabezal del magnetófono: pasa el ratón o tócalo y te dice quién subió la canción." },

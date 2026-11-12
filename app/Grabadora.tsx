@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { MAX_SEC, REVISAR } from "@/lib/buzon-reglas";
+import { MAX_SEC, MAX_SUBIDA, REVISAR } from "@/lib/buzon-reglas";
 import { BUZON_NUEVO } from "./buzonEstado";
 
-type Estado = { fase: "pidiendo" } | { fase: "grabando"; desde: number } | { fase: "lista"; audio: Blob; url: string } | { fase: "enviando"; audio: Blob; url: string };
+type Estado = { fase: "pidiendo" } | { fase: "sinMicro" } | { fase: "grabando"; desde: number } | { fase: "lista"; audio: Blob; url: string } | { fase: "enviando"; audio: Blob; url: string };
 
 // Opus en WebM donde se puede (Chrome, Firefox), AAC en MP4 en Safari; los dos suenan en todos
 const TIPOS = ["audio/webm;codecs=opus", "audio/mp4", "audio/ogg;codecs=opus"];
@@ -44,14 +44,13 @@ export function Grabadora({ onClose, onStatus }: { onClose: () => void; onStatus
   const abierta = useRef(true);
 
   async function grabar() {
-    let stream: MediaStream;
-    try {
-      // La radio sigue sonando mientras hablas; la cancelación de eco la quita de la grabación
-      stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
-    } catch {
-      onStatus("Sin permiso para usar el micrófono");
-      return onClose();
-    }
+    // La radio sigue sonando mientras hablas; la cancelación de eco la quita de la grabación
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } }).catch(() => {
+      onStatus("Sin permiso para usar el micrófono; puedes subir un audio");
+      setEstado({ fase: "sinMicro" });
+      return null;
+    });
+    if (!stream) return;
     if (!abierta.current) return stream.getTracks().forEach((t) => t.stop());
     const mimeType = TIPOS.find((t) => MediaRecorder.isTypeSupported(t));
     const rec = new MediaRecorder(stream, { ...(mimeType && { mimeType }), audioBitsPerSecond: 64_000 });
@@ -72,18 +71,46 @@ export function Grabadora({ onClose, onStatus }: { onClose: () => void; onStatus
     setEstado({ fase: "grabando", desde });
   }
 
+  /** Para la grabación sin quedarse con lo grabado */
+  function cortar() {
+    const rec = recorder.current;
+    if (!rec) return;
+    recorder.current = null;
+    rec.ondataavailable = null;
+    rec.onstop = null;
+    rec.stop();
+    rec.stream.getTracks().forEach((t) => t.stop());
+  }
+
+  // Un audio ya grabado sustituye a la grabación
+  function subir(file: File) {
+    if (!file.type.startsWith("audio/")) return onStatus("Eso no es un audio");
+    const url = URL.createObjectURL(file);
+    const a = new Audio();
+    a.preload = "metadata";
+    a.onloadedmetadata = () => {
+      if (a.duration > MAX_SUBIDA + 0.5) {
+        URL.revokeObjectURL(url);
+        return onStatus(`Tiene que durar ${MAX_SUBIDA} s como mucho`);
+      }
+      cortar();
+      onStatus("");
+      setEstado({ fase: "lista", audio: file, url });
+    };
+    a.onerror = () => {
+      URL.revokeObjectURL(url);
+      onStatus("Este navegador no puede abrir ese audio");
+    };
+    a.src = url;
+  }
+
   // Abrirla es empezar a grabar
   useEffect(() => {
     abierta.current = true;
     grabar();
     return () => {
       abierta.current = false;
-      const rec = recorder.current;
-      if (!rec) return;
-      rec.ondataavailable = null;
-      rec.onstop = null;
-      rec.stop();
-      rec.stream.getTracks().forEach((t) => t.stop());
+      cortar();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -136,6 +163,12 @@ export function Grabadora({ onClose, onStatus }: { onClose: () => void; onStatus
   return (
     <div role="group" aria-label="Buzón de voz" onKeyDown={(e) => e.key === "Escape" && onClose()} className="flex flex-wrap items-center gap-2">
       {estado.fase === "pidiendo" && <span className="py-1.5">Abriendo el micrófono…</span>}
+      {(estado.fase === "pidiendo" || estado.fase === "grabando" || estado.fase === "sinMicro") && (
+        <label className={`cursor-pointer border border-accent focus-within:text-white ${boton}`}>
+          Subir audio
+          <input type="file" accept="audio/*" className="sr-only" onChange={(e) => e.target.files?.[0] && subir(e.target.files[0])} />
+        </label>
+      )}
       {estado.fase === "grabando" && (
         <>
           <span className="flex items-center gap-2 py-1.5" aria-live="off">

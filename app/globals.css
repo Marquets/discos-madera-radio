@@ -630,6 +630,71 @@ header nav,
   transition: opacity 1.5s ease;
 }
 
+/* Las esquinas de los mensajes y del buzón se esconden y asoman al pasar por encima, o al
+   tocarlas en el móvil (el tabindex les da el foco); escondidas, un punto que late recuerda que
+   están ahí. Sus hijos no reciben clics hasta que asoman, para que el primer toque enseñe en vez
+   de pulsar algo que no se ve. Los avisos (aria-live) no se esconden nunca. */
+:is(.mensajes-form, .buzon-voz) {
+  outline: none;
+
+  & > :not([aria-live]) {
+    transition: opacity 0.3s ease;
+  }
+
+  &::after {
+    content: "";
+    position: absolute;
+    bottom: 0.75rem;
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: var(--color-accent);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    animation: recuerdo 2.4s ease-in-out infinite;
+  }
+
+  &:not(:hover, :focus-within, [data-abierto]) {
+    & > :not([aria-live]) {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    &::after {
+      opacity: 1;
+    }
+  }
+}
+
+.mensajes-form::after {
+  left: 0.25rem;
+}
+
+.buzon-voz::after {
+  right: 1rem;
+  bottom: 1rem;
+}
+
+@keyframes recuerdo {
+  0%,
+  100% {
+    scale: 0.7;
+    box-shadow: 0 0 2px var(--color-accent);
+  }
+  50% {
+    scale: 1;
+    box-shadow: 0 0 12px 3px var(--color-accent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :is(.mensajes-form, .buzon-voz)::after {
+    animation: none;
+    box-shadow: 0 0 8px 2px var(--color-accent);
+  }
+}
+
 /* En el salvapantallas el conjunto crece hasta donde deja la pantalla. --deck-w es el ancho
    del magnetófono, que mide de alto 0.356 veces su ancho (su viewBox, 736 × 262). Lo demás
    del conjunto mide unos 16.5rem con Spotify (logo grande, "Radio", márgenes y los 80px del

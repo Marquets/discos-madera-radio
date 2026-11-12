@@ -37,7 +37,7 @@ export function MensajeBuzon() {
   }, [status, grabando]);
 
   return (
-    <div className="buzon-voz absolute right-4 bottom-4 flex max-w-[min(28rem,calc(100%-2rem))] flex-col items-end gap-2 text-right font-mono text-xs uppercase sm:right-8 max-sm:bottom-14">
+    <div tabIndex={-1} data-abierto={grabando || undefined} className="buzon-voz absolute right-4 bottom-4 flex max-w-[min(28rem,calc(100%-2rem))] flex-col items-end gap-2 text-right font-mono text-xs uppercase sm:right-8 max-sm:bottom-14">
       <p aria-live="polite" className="empty:hidden">
         {status}
       </p>

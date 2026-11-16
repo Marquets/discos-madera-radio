@@ -78,6 +78,8 @@ const BUZON_POLL_MS = 2 * 60_000;
 const OIDOS_KEY = "radio-buzon-oidos";
 // The logo's animations while a jingle plays, one per jingle in this order; globals.css has each one
 const LOGO_ANIMS = ["baile", "ondas", "cinta", "neon", "glitch", "dibujo", "dibus"];
+// La canción baja a esto mientras un mensaje del buzón suena por encima (solo YouTube tiene volumen)
+const BAJO_MENSAJE = 0.3;
 
 let spotifyApi: Promise<IFrameAPI> | undefined;
 
@@ -212,14 +214,18 @@ export function RadioPlayer({ tracks, thanks, cadena, cadenas }: { tracks: Radio
     };
 
     // Declarations, not consts, so they can schedule each other
-    function playAt(index: number, startAt: number) {
+    // encima: un mensaje del buzón va a sonar sobre esta canción, y no hay que cortarlo
+    function playAt(index: number, startAt: number, encima = false) {
       // Re-tuning after a blocked autoplay would otherwise leave two chains running
       clearTimeout(timer.current);
-      buzonRun++;
-      setBuzon(false);
-      cambiarBuzon({ escuchando: false });
-      jingle.pause();
-      showJingle(false);
+      if (!encima) {
+        buzonRun++;
+        setBuzon(false);
+        cambiarBuzon({ escuchando: false });
+        jingle.pause();
+        showJingle(false);
+        controller.current?.setVolume?.(volumeRef.current);
+      }
       // So the new song's first "paused at 0" report isn't taken for the end of the old one
       progress.current = null;
       const track = tracksRef.current[index];
@@ -251,17 +257,33 @@ export function RadioPlayer({ tracks, thanks, cadena, cadenas }: { tracks: Radio
       // The clock picks the next song in the shuffle, but from the top: by now the clock is a
       // few seconds into it. Each song and jingle adds that delay, so a long session drifts
       // from other listeners; a reload re-syncs.
-      const playNext = () => {
+      const playNext = (encima = false) => {
         const tracks = tracksRef.current;
         let np = nowPlaying(tracks, Date.now())!;
         // A song that ends a moment before the clock does would otherwise play again
         if (tracks[np.index].id === playingId) np = nowPlaying(tracks, Date.now() + (tracks[np.index].durationSec - np.offsetSec) * 1000 + 1)!;
-        playAt(np.index, 0);
+        playAt(np.index, 0, encima);
       };
       if (++songsSinceJingle < JINGLE_EVERY || (document.hidden && !jingleReady)) return playNext();
-      // Detrás de la cortinilla, un mensaje del buzón que aquí aún no se haya oído, si lo hay
-      const nuevo = buzonList.find((m) => !oidos.has(m.id));
-      const despues = () => (nuevo ? ponMensajes([nuevo], playNext) : playNext());
+      // Detrás de la cortinilla, sobre la canción que empieza, un mensaje del buzón: primero los que
+      // aquí aún no se han oído, y luego cualquiera menos el de la vez anterior. Los personajes
+      // de la portada cruzan al acabar (Paseo.tsx)
+      const otros = buzonList.filter((m) => m.id !== ultimoEnAntena);
+      const nuevo = buzonList.find((m) => !oidos.has(m.id)) ?? otros[Math.floor(Math.random() * otros.length)] ?? buzonList[0];
+      ultimoEnAntena = nuevo?.id;
+      const cruzan = () => window.dispatchEvent(new Event("radio:cortinilla"));
+      const despues = () => {
+        if (!nuevo) {
+          cruzan();
+          return playNext();
+        }
+        playNext(true);
+        controller.current?.setVolume?.(volumeRef.current * BAJO_MENSAJE);
+        ponMensajes([nuevo], () => {
+          controller.current?.setVolume?.(volumeRef.current);
+          cruzan();
+        }, true, false);
+      };
       if (!JINGLES.length) {
         if (nuevo) songsSinceJingle = 0;
         return despues();
@@ -273,8 +295,6 @@ export function RadioPlayer({ tracks, thanks, cadena, cadenas }: { tracks: Radio
       } catch {}
       jingle.onended = () => {
         jingleReady = true;
-        // Once a jingle is over, one of the page's characters crosses (Paseo.tsx)
-        window.dispatchEvent(new Event("radio:cortinilla"));
         despues();
       };
       // A jingle that can't play must not stop the radio
@@ -292,9 +312,10 @@ export function RadioPlayer({ tracks, thanks, cadena, cadenas }: { tracks: Radio
       setPlaying(true);
     }
 
-    // El buzón de la portada (MensajeBuzon.tsx). Cada mensaje aprobado suena una vez en antena
-    // justo después de una cortinilla, y todos se pueden escuchar cuando uno quiera
+    // El buzón de la portada (MensajeBuzon.tsx). Después de cada cortinilla suena uno en antena,
+    // y todos se pueden escuchar cuando uno quiera
     let buzonList: { id: string; at: string }[] = [];
+    let ultimoEnAntena: string | undefined;
     let oidos = new Set<string>();
     try {
       oidos = new Set(JSON.parse(localStorage.getItem(OIDOS_KEY) ?? "[]"));
@@ -322,10 +343,10 @@ export function RadioPlayer({ tracks, thanks, cadena, cadenas }: { tracks: Radio
 
     /**
      * Los mensajes como en un contestador: la cortinilla del buzón si la hay, "Tienes N mensajes"
-     * y un pitido antes de cada uno; luego alAcabar
+     * (sin aviso, se lo salta) y un pitido antes de cada uno; luego alAcabar
      */
-    function ponMensajes(mensajes: { id: string }[], alAcabar: () => void, radioSonando = true) {
-      const clips = [...(BUZON_INTRO ? [BUZON_INTRO] : []), tienes(mensajes.length), ...mensajes.flatMap((m) => [PITIDO, `/api/buzon/${m.id}`])];
+    function ponMensajes(mensajes: { id: string }[], alAcabar: () => void, radioSonando = true, aviso = true) {
+      const clips = [...(BUZON_INTRO ? [BUZON_INTRO] : []), ...(aviso ? [tienes(mensajes.length)] : []), ...mensajes.flatMap((m) => [PITIDO, `/api/buzon/${m.id}`])];
       const run = ++buzonRun;
       escuchando = true;
       setBuzon(true);
@@ -333,7 +354,8 @@ export function RadioPlayer({ tracks, thanks, cadena, cadenas }: { tracks: Radio
       // The song player is paused now, which would bring back the ▶ button mid-message
       if (radioSonando) setPlaying(true);
       let i = 0;
-      let shown = false;
+      // Detrás de una cortinilla, su animación sigue en bucle en vez de cambiar por otra
+      let shown = document.documentElement.hasAttribute("data-cortinilla");
       const done = () => {
         if (run !== buzonRun) return;
         jingle.onended = jingle.onerror = null;

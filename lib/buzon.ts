@@ -5,7 +5,7 @@ import { blobs, withinTimeout } from "./db";
  * El buzón de voz de la portada: mensajes de hasta 30 segundos para la radio
  * (60 si se sube un audio ya grabado). Entran aprobados,
  * o esperan a que alguien los apruebe si REVISAR (buzon-reglas.ts); los aprobados se pueden
- * escuchar desde la portada y suenan en antena detrás de una cortinilla. Todos se borran a la
+ * escuchar desde la portada y suenan en antena detrás de las cortinillas. Todos se borran a la
  * semana de grabarse.
  *
  * Cada mensaje es un blob suelto, buzon/<id>, con su hora y si está aprobado en los metadatos, y

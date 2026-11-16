@@ -108,8 +108,8 @@ export function Cola() {
   return (
     <>
       <p>
-        {REVISAR ? "Los aprobados" : "Entran directos, sin revisión. Todos"} se pueden escuchar desde la portada, y cada oyente los oye una vez en antena, detrás de una
-        cortinilla. Se borran solos a los 7 días de grabarse; aquí puedes borrar antes el que sobre.
+        {REVISAR ? "Los aprobados" : "Entran directos, sin revisión. Todos"} se pueden escuchar desde la portada, y detrás de cada cortinilla suena uno en
+        antena, primero los que ese oyente aún no ha oído. Se borran solos a los 7 días de grabarse; aquí puedes borrar antes el que sobre.
       </p>
       {/* Sin revisión (REVISAR en lib/buzon-reglas.ts) todos llegan aprobados y esta parte no sale */}
       {(REVISAR || pendientes.length > 0) && (

@@ -184,7 +184,8 @@ body:has(#radio[data-source="youtube"]) #reproductor {
 
 /* Mientras suena una cortinilla el logo, ya en el centro, hace una de estas animaciones,
    por turnos: RadioPlayer las va poniendo en data-anim (baile, ondas, cinta, neon, glitch, dibujo, dibus).
-   --fase es lo que dura la cortinilla, para las que van de principio a fin. */
+   --fase es lo que dura la cortinilla, para las que van de principio a fin; se repiten si
+   detrás suena un mensaje del buzón. */
 
 /* overflow visible: al saltar o brillar, el logo se sale del lienzo del SVG y se cortaba */
 html[data-cortinilla] header a[href="/"] svg {
@@ -435,7 +436,7 @@ html[data-anim="cinta"] header a[href="/"] svg {
 
 html[data-anim="neon"] header a[href="/"] svg {
   filter: drop-shadow(0 0 4px var(--color-accent)) drop-shadow(0 0 16px var(--color-accent));
-  animation: neon var(--fase, 3s) linear both;
+  animation: neon var(--fase, 3s) linear infinite;
 }
 
 /* Glitch: el logo tiembla y se desdobla en copias de color desplazadas */
@@ -488,7 +489,7 @@ html[data-anim="dibujo"] header a[href="/"] svg > :is(g, path) {
   stroke: currentColor;
   stroke-width: 5;
   stroke-dasharray: 1600;
-  animation: dibujo var(--fase, 3s) ease-in-out both;
+  animation: dibujo var(--fase, 3s) ease-in-out infinite;
 }
 
 /* Y todo lo demás funde a negro: la barra de arriba, el hero, el reproductor y el menú se

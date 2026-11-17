@@ -6,6 +6,7 @@ import { abiertas, COOKIE, COOKIE_VER, elegirCadena } from "@/lib/cadenas";
 import { cadenaActual, enAntena, publicas } from "@/lib/cadenas-server";
 import { recentContributors } from "@/lib/contributors";
 import { getTracks } from "@/lib/sync";
+import { Boom } from "./Boom";
 import { CortinillaDibus } from "./CortinillaDibus";
 import { Info } from "./Info";
 import { Logo } from "./Logo";
@@ -67,9 +68,18 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
                 the channel switch lives up in the ticker (RadioPlayer), and the right one
                 holds the info button, level with the menu. */}
             <NavLinks cadenas={publicas()} />
-            <Link href="/" className="flex flex-col items-center gap-1">
+            <Link href="/" className="col-start-2 row-start-1 flex flex-col items-center gap-1">
               <Logo className="h-14 w-auto sm:h-20" />
               <span className="font-mono text-xs tracking-[0.5em] sm:text-sm">Radio</span>
+            </Link>
+            {/* Stuck on the logo's right edge like a sticker; it shares the logo's cell so it drops with it */}
+            <Link href="/lo-mejor-2026" className="best-of boom-boton z-30 col-start-2 row-start-1 grid w-14 translate-x-[85%] place-items-center self-start justify-self-end text-black sm:w-24">
+              <Boom className="col-start-1 row-start-1 w-full" />
+              <span className="col-start-1 row-start-1 -rotate-6 text-center font-display text-[9px] uppercase leading-none sm:text-sm">
+                Best of
+                <br />
+                2026!!
+              </span>
             </Link>
             <Info />
           </header>

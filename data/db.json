@@ -937,19 +937,6 @@
       "addedBy": "maria.clarinete-es"
     },
     {
-      "id": "1lNBXrBI3ePSq9WIg9rYgG",
-      "title": "Las Alamedas",
-      "artist": "Tarta Relena",
-      "spotifyUri": "spotify:track:1lNBXrBI3ePSq9WIg9rYgG",
-      "durationSec": 221,
-      "firstSeenAt": "2026-11-05T13:42:49.367Z",
-      "cover": "https://image-cdn-fa.spotifycdn.com/image/ab67616d00001e02a46945ca5cfc18980b99ae21",
-      "energy": "tranquila",
-      "nocturna": false,
-      "youtubeId": "AJLYgJ6Xlx4",
-      "addedBy": "maria.clarinete-es"
-    },
-    {
       "id": "5tJDSRD47Pp2oOuCisfxoE",
       "title": "El Nadador",
       "artist": "Nacho Casado",
@@ -1193,7 +1180,8 @@
       "firstSeenAt": "2026-11-06T16:55:15Z",
       "cover": "https://image-cdn-fa.spotifycdn.com/image/ab67616d00001e0242b119f7990cf76628bdc768",
       "energy": null,
-      "nocturna": false
+      "nocturna": false,
+      "youtubeId": "eNsPSJHhkJs"
     },
     {
       "id": "69h9YorEIvIuYGnfSOESyu",
@@ -1205,7 +1193,8 @@
       "firstSeenAt": "2026-11-06T16:55:22Z",
       "cover": "https://image-cdn-fa.spotifycdn.com/image/ab67616d00001e02e9cd6441f5c6665cbb9706b7",
       "energy": "media",
-      "nocturna": false
+      "nocturna": false,
+      "youtubeId": "PAY30TA__gU"
     },
     {
       "id": "00Xcf47ApZUt6omH2RgdUM",
@@ -1217,7 +1206,8 @@
       "firstSeenAt": "2026-11-06T16:55:40Z",
       "cover": "https://image-cdn-fa.spotifycdn.com/image/ab67616d00001e0235428e70f89fc95e0906df7b",
       "energy": "animada",
-      "nocturna": false
+      "nocturna": false,
+      "youtubeId": "JCZ_Uad8vVc"
     },
     {
       "id": "1W0jtNJnnjN6rD1aw4dG5T",
@@ -1229,7 +1219,8 @@
       "firstSeenAt": "2026-11-07T11:38:38Z",
       "cover": "https://image-cdn-fa.spotifycdn.com/image/ab67616d00001e027edc723d8c9b03539c24aca3",
       "energy": "animada",
-      "nocturna": false
+      "nocturna": false,
+      "youtubeId": "q8_drmMJTxk"
     },
     {
       "id": "5fty13GaUkkD31bHwB6Bse",
@@ -1241,7 +1232,8 @@
       "firstSeenAt": "2026-11-07T11:51:32Z",
       "cover": "https://image-cdn-fa.spotifycdn.com/image/ab67616d00001e0227836860ec501aa01951050d",
       "energy": "tranquila",
-      "nocturna": false
+      "nocturna": false,
+      "youtubeId": "4iU8qYr63oc"
     },
     {
       "id": "0ivHDucXMbjTjiU4lMIkBO",
@@ -1253,7 +1245,8 @@
       "firstSeenAt": "2026-11-07T11:52:37Z",
       "cover": "https://image-cdn-fa.spotifycdn.com/image/ab67616d00001e025dcf459d038104c9ba910442",
       "energy": "media",
-      "nocturna": false
+      "nocturna": false,
+      "youtubeId": "1SHCsgqZvQM"
     },
     {
       "id": "0rjmjw66MN5qDr8jAEOi5k",
@@ -1265,7 +1258,8 @@
       "firstSeenAt": "2026-11-07T11:53:02Z",
       "cover": "https://image-cdn-fa.spotifycdn.com/image/ab67616d00001e025e70712e0193f7a9bbc23c0d",
       "energy": "animada",
-      "nocturna": false
+      "nocturna": false,
+      "youtubeId": "iF00AUr8I8g"
     },
     {
       "id": "6fe8ZuY4fiKcTzeIV9oXYG",
@@ -1277,7 +1271,8 @@
       "firstSeenAt": "2026-11-07T11:56:01Z",
       "cover": "https://image-cdn-ak.spotifycdn.com/image/ab67616d00001e02671e975482aef4def0be113d",
       "energy": "tranquila",
-      "nocturna": false
+      "nocturna": false,
+      "youtubeId": "wD6JGQS05NY"
     },
     {
       "id": "4EkNINvDLeGgIL4zYGsYPb",
@@ -1289,7 +1284,8 @@
       "firstSeenAt": "2026-11-07T16:34:24Z",
       "cover": "https://image-cdn-fa.spotifycdn.com/image/ab67616d00001e028ec81cc654b45ade8bdf1486",
       "energy": "animada",
-      "nocturna": false
+      "nocturna": false,
+      "youtubeId": "YVgWQyGOTvk"
     },
     {
       "id": "1qz1IMI5V2S39g8QvFiXGA",
@@ -1301,152 +1297,9 @@
       "firstSeenAt": "2026-11-08T00:22:48Z",
       "cover": "https://image-cdn-fa.spotifycdn.com/image/ab67616d00001e02f938e5cfba774fa5ecbabffe",
       "energy": "animada",
-      "nocturna": false
-    },
-    {
-      "id": "4euxFlxLWVGmZZLyYARTyE",
-      "title": "Spanish Joint",
-      "artist": "D'Angelo",
-      "spotifyUri": "spotify:track:4euxFlxLWVGmZZLyYARTyE",
-      "durationSec": 344,
-      "addedBy": "1133324376",
-      "firstSeenAt": "2026-11-08T01:10:14Z",
-      "cover": "https://image-cdn-fa.spotifycdn.com/image/ab67616d00001e022b3dc336a7a69293c25d9ade",
-      "energy": "media",
-      "nocturna": false
-    },
-    {
-      "id": "35uu4l4jYnCLMh88URXqoX",
-      "title": "Aquellos Ojos Verdes",
-      "artist": "Nat King Cole",
-      "spotifyUri": "spotify:track:35uu4l4jYnCLMh88URXqoX",
-      "durationSec": 133,
-      "addedBy": "sirmarcaca",
-      "firstSeenAt": "2026-11-08T14:51:44Z",
-      "cover": "https://image-cdn-fa.spotifycdn.com/image/ab67616d00001e02f801c40121cd4dc53495defc",
-      "energy": "media",
-      "nocturna": false
-    },
-    {
-      "id": "1gAYpEcwmPxJLL5eyVng5v",
-      "title": "Mulatu - Live",
-      "artist": "Mulatu Astatke",
-      "spotifyUri": "spotify:track:1gAYpEcwmPxJLL5eyVng5v",
-      "durationSec": 430,
-      "addedBy": "sirmarcaca",
-      "firstSeenAt": "2026-11-08T20:05:39Z",
-      "cover": "https://image-cdn-fa.spotifycdn.com/image/ab67616d00001e0213b21670500955cce8b5bf26",
-      "energy": "animada",
-      "nocturna": false
-    },
-    {
-      "id": "1mlmcN5lG135sbXdK0V1X7",
-      "title": "Double Trouble",
-      "artist": "Karriem Riggins",
-      "spotifyUri": "spotify:track:1mlmcN5lG135sbXdK0V1X7",
-      "durationSec": 117,
-      "addedBy": "sirmarcaca",
-      "firstSeenAt": "2026-11-08T22:06:42Z",
-      "cover": "https://image-cdn-fa.spotifycdn.com/image/ab67616d00001e0252f6ac08e4dd68fb06caf0dc",
-      "energy": "animada",
-      "nocturna": false
-    },
-    {
-      "id": "3NYm3ZimuJNb0Z0px5OEwO",
-      "title": "Marechià",
-      "artist": "Nu Genea, Célia Kameni",
-      "spotifyUri": "spotify:track:3NYm3ZimuJNb0Z0px5OEwO",
-      "durationSec": 264,
-      "addedBy": "1133324376",
-      "firstSeenAt": "2026-11-09T15:11:25Z",
-      "cover": "https://image-cdn-fa.spotifycdn.com/image/ab67616d00001e02e9565c16b1c048ec3b19b070",
-      "energy": "animada",
-      "nocturna": false
-    },
-    {
-      "id": "4A48ckONJNoXU5smWT9CeG",
-      "title": "If You Don't Want My Love",
-      "artist": "Jalen Ngonda",
-      "spotifyUri": "spotify:track:4A48ckONJNoXU5smWT9CeG",
-      "durationSec": 147,
-      "addedBy": "1133324376",
-      "firstSeenAt": "2026-11-09T16:19:30Z",
-      "cover": "https://image-cdn-fa.spotifycdn.com/image/ab67616d00001e02753a720a9845b697d8a120f6",
-      "energy": "animada",
-      "nocturna": false
-    },
-    {
-      "id": "6lH8OSGTxVdvuJFGcvsC2f",
-      "title": "Chains",
-      "artist": "The Cookies",
-      "spotifyUri": "spotify:track:6lH8OSGTxVdvuJFGcvsC2f",
-      "durationSec": 153,
-      "addedBy": "sirmarcaca",
-      "firstSeenAt": "2026-11-09T18:55:45Z",
-      "cover": "https://image-cdn-fa.spotifycdn.com/image/ab67616d00001e02eb316a4002db81c9d4a8eab0",
-      "energy": "animada",
-      "nocturna": false
-    },
-    {
-      "id": "54idQUUsLObIZcSlHktepN",
-      "title": "(Baby, Baby) I Can't Take It No More",
-      "artist": "Tommy James & The Shondells",
-      "spotifyUri": "spotify:track:54idQUUsLObIZcSlHktepN",
-      "durationSec": 146,
-      "addedBy": "sirmarcaca",
-      "firstSeenAt": "2026-11-09T19:09:53Z",
-      "cover": "https://image-cdn-ak.spotifycdn.com/image/ab67616d00001e02967c54ae1904f1522079b337",
-      "energy": "media",
-      "nocturna": false
-    },
-    {
-      "id": "5Iel8B8LQe12lEofB20OTp",
-      "title": "Over and Over",
-      "artist": "The Altons",
-      "spotifyUri": "spotify:track:5Iel8B8LQe12lEofB20OTp",
-      "durationSec": 229,
-      "addedBy": "sirmarcaca",
-      "firstSeenAt": "2026-11-09T19:12:14Z",
-      "cover": "https://image-cdn-ak.spotifycdn.com/image/ab67616d00001e0223bd29641cd9967af2b33df0",
-      "energy": "media",
-      "nocturna": false
-    },
-    {
-      "id": "3LvdkZ47TSmY4Kqt0F204q",
-      "title": "Red Onion",
-      "artist": "Richard \"Groove\" Holmes",
-      "spotifyUri": "spotify:track:3LvdkZ47TSmY4Kqt0F204q",
-      "durationSec": 222,
-      "addedBy": "sirmarcaca",
-      "firstSeenAt": "2026-11-09T19:14:21Z",
-      "cover": "https://i.scdn.co/image/4080900b24ee8440873ca90363263759f6c9393d",
-      "energy": "media",
-      "nocturna": false
-    },
-    {
-      "id": "0d2ToVf1DsuYCyyiveQ9ai",
-      "title": "I Feel Like Breaking up Somebody's Home Tonight",
-      "artist": "Ann Peebles",
-      "spotifyUri": "spotify:track:0d2ToVf1DsuYCyyiveQ9ai",
-      "durationSec": 150,
-      "addedBy": "sirmarcaca",
-      "firstSeenAt": "2026-11-09T19:14:40Z",
-      "cover": "https://image-cdn-ak.spotifycdn.com/image/ab67616d00001e029c15ef25797313383647c7f3",
-      "energy": "media",
-      "nocturna": false
-    },
-    {
-      "id": "7yQpHgbDPweCZhTD5ZtXES",
-      "title": "They Say I'm Different",
-      "artist": "Betty Davis",
-      "spotifyUri": "spotify:track:7yQpHgbDPweCZhTD5ZtXES",
-      "durationSec": 255,
-      "addedBy": "sirmarcaca",
-      "firstSeenAt": "2026-11-09T19:16:58Z",
-      "cover": "https://image-cdn-fa.spotifycdn.com/image/ab67616d00001e022bb3b2e77c0808ae2871822c",
-      "energy": "animada",
-      "nocturna": false
+      "nocturna": false,
+      "youtubeId": "sAPAmblxYIc"
     }
   ],
-  "lastSyncAt": "2026-11-09T19:46:08.699Z"
+  "lastSyncAt": "2026-11-17T13:06:42.427Z"
 }

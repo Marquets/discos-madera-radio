@@ -53,7 +53,7 @@
 @media (min-width: 640px) {
   /* Al navegar, Next deja la página anterior en el DOM con display: none en su raíz, y
      sin el :not el logo seguía bajado en el archivo tras venir de la portada */
-  body:has(:not([style*="display: none"]) > :is(#reproductor, #tocadiscos)) header a[href="/"] {
+  body:has(:not([style*="display: none"]) > :is(#reproductor, #tocadiscos)) header :is(a[href="/"], .best-of) {
     margin-top: var(--logo-drop);
   }
 }
@@ -751,4 +751,136 @@ header nav,
     linear-gradient(var(--color-black), var(--color-black)) bottom / 100% 2rem no-repeat local,
     linear-gradient(transparent, color-mix(in srgb, var(--color-accent) 25%, transparent)) bottom / 100% 2rem no-repeat scroll,
     var(--color-black);
+}
+
+/* The very best of 2026 (lo-mejor-2026/page.tsx): el bocadillo estalla al entrar, el texto
+   llega de un golpe justo detrás y luego todo tiembla un poco, como un ¡BOOM! de tebeo */
+@keyframes estalla {
+  from {
+    opacity: 0;
+    transform: scale(0.15) rotate(-20deg);
+  }
+  55% {
+    opacity: 1;
+    transform: scale(1.12) rotate(4deg);
+  }
+  75% {
+    transform: scale(0.96) rotate(-2deg);
+  }
+  to {
+    transform: scale(1) rotate(0);
+  }
+}
+
+@keyframes golpe {
+  from {
+    opacity: 0;
+    scale: 2.2;
+  }
+  70% {
+    opacity: 1;
+    scale: 0.94;
+  }
+  to {
+    scale: 1;
+  }
+}
+
+@keyframes tiembla {
+  0%,
+  100% {
+    transform: rotate(0) scale(1);
+  }
+  50% {
+    transform: rotate(1.5deg) scale(1.02);
+  }
+}
+
+.boom-temblor {
+  animation: tiembla 2.4s ease-in-out 1.2s infinite;
+}
+
+.boom-estallido {
+  animation: estalla 0.7s cubic-bezier(0.3, 1.4, 0.5, 1) both;
+}
+
+.boom-texto {
+  animation: golpe 0.45s ease-out 0.35s both;
+}
+
+/* Detrás del bocadillo: rayos de tebeo que giran despacio y una trama de puntos que se
+   apaga hacia el centro, los dos en el color de la cadena */
+@keyframes gira {
+  to {
+    rotate: 1turn;
+  }
+}
+
+.boom-rayos {
+  background: repeating-conic-gradient(color-mix(in srgb, var(--color-accent) 20%, transparent) 0deg 5deg, transparent 5deg 15deg);
+  mask: radial-gradient(closest-side, #000 15%, transparent 75%);
+  animation: gira 90s linear infinite;
+}
+
+.boom-puntos {
+  background: radial-gradient(circle, color-mix(in srgb, var(--color-accent) 60%, transparent) 1.4px, transparent 1.7px) center / 13px 13px;
+  mask: radial-gradient(ellipse at center, transparent 30%, #000 95%);
+}
+
+/* El 2026 en el color de la cadena, con contorno y sombra negra dura */
+.boom-cifra {
+  color: var(--color-accent);
+  -webkit-text-stroke: 0.05em #000;
+  paint-order: stroke fill;
+  text-shadow: 0.05em 0.05em 0 #000;
+}
+
+/* Las portadas salen disparadas de la explosión y se quedan flotando. Su sitio final va
+   fuera de la animación, así que sin movimiento ya están ahí */
+@keyframes sale {
+  from {
+    opacity: 0;
+    translate: 0 0;
+    rotate: 0deg;
+    scale: 0.2;
+  }
+}
+
+@keyframes flota {
+  50% {
+    transform: translateY(-0.5rem);
+  }
+}
+
+.boom-disco {
+  translate: var(--x) var(--y);
+  rotate: var(--r);
+  animation:
+    sale 0.8s cubic-bezier(0.2, 1.3, 0.4, 1) var(--d) both,
+    flota 4s ease-in-out calc(var(--d) + 0.8s) infinite;
+}
+
+.boom-lema {
+  animation: golpe 0.5s ease-out 0.9s both;
+}
+
+/* La pegatina junto al logo que lleva hasta ahí (layout.tsx); en la propia página sobra */
+.boom-boton {
+  animation: tiembla 1.6s ease-in-out infinite;
+}
+
+body:has(:not([style*="display: none"]) > .boom) .best-of {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .boom-temblor,
+  .boom-rayos,
+  .boom-disco,
+  .boom-lema,
+  .boom-estallido,
+  .boom-texto,
+  .boom-boton {
+    animation: none;
+  }
 }

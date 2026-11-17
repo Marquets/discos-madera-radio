@@ -118,6 +118,17 @@ export async function getTrack(id: string): Promise<FoundTrack | null> {
   return found(await res.json());
 }
 
+/** The id in a pasted album link (open.spotify.com/album/…, with or without intl-xx) or URI */
+export const albumIdFrom = (text: string) => text.match(/(?:open\.spotify\.com\/(?:intl-[a-z-]+\/)?album\/|spotify:album:)([A-Za-z0-9]{22})/)?.[1];
+
+export async function getAlbum(id: string) {
+  const res = await fetch(`https://api.spotify.com/v1/albums/${id}`, { headers: { Authorization: `Bearer ${await appToken()}` } });
+  if (res.status === 400 || res.status === 404) return null;
+  if (!res.ok) throw new Error(`Spotify album ${res.status}`);
+  const a: { name: string; artists: { name: string }[]; images: { url: string }[] } = await res.json();
+  return { title: a.name, artist: a.artists.map((x) => x.name).join(", "), cover: a.images[0]?.url ?? "", url: `https://open.spotify.com/album/${id}` };
+}
+
 /** A pasted link finds just that song; anything else goes to Spotify's search */
 export async function searchTracks(text: string): Promise<FoundTrack[]> {
   const id = trackIdFrom(text);

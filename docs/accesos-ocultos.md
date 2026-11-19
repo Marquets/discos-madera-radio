@@ -28,6 +28,7 @@ Se añaden a cualquier página, por ejemplo `/?cortinilla`.
 | `?cortinilla` | Al sintonizar suena una cortinilla en el momento, sin esperar |
 | `?cortinilla=<animación>` | Igual, pero con esa animación del logo: `baile`, `ondas`, `cinta`, `neon`, `glitch`, `dibujo` o `dibus` |
 | `?buzon` | Al sintonizar pone el último mensaje del buzón, como en antena |
+| `?entradilla=<id>` | Al sintonizar pone la canción de esa entradilla desde el principio, con ella encima. Lo mismo hace "Oír con su canción" en `/buzon` y el ▶ de cada canción en `/entradillas` |
 | `?paseo=taxi` / `?paseo=caracol` / `?paseo=juntos` | Saca ese paseo por el hero en el momento |
 | `?cadenas=ver` | Abre todas las cadenas fuera de temporada (p. ej. Navidad antes del 1 de diciembre). Se queda guardado un año en una cookie |
 | `?cadenas=no` | Quita lo anterior |

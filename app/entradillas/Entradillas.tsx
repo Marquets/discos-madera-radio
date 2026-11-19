@@ -1,8 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { MAX_SEC, MAX_SUBIDA } from "@/lib/buzon-reglas";
+import { BUZON_NUEVO, oirEntradilla } from "../buzonEstado";
 import { Grabadora, Microfono } from "../Grabadora";
 
 type Tema = { id: string; title: string; artist: string; cover?: string };
@@ -14,6 +15,25 @@ export function Entradillas({ tracks, inicial }: { tracks: Tema[]; inicial?: str
   const [busqueda, setBusqueda] = useState("");
   const [elegido, setElegido] = useState(tracks.find((t) => t.id === inicial)?.id ?? null);
   const [status, setStatus] = useState("");
+  // Las que ya hay, para oír cómo queda cada canción con la suya
+  const [hechas, setHechas] = useState<{ id: string; track: string }[]>([]);
+  useEffect(() => {
+    const cargar = () =>
+      fetch("/api/entradillas")
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => d && setHechas(d.entradillas))
+        .catch(() => {});
+    cargar();
+    // La grabadora lo avisa al guardar una
+    window.addEventListener(BUZON_NUEVO, cargar);
+    return () => window.removeEventListener(BUZON_NUEVO, cargar);
+  }, []);
+
+  /** La más nueva de esa canción, sonando encima de su arranque como en antena */
+  function oir(track: string) {
+    const ultima = hechas.findLast((e) => e.track === track);
+    if (ultima) setStatus(oirEntradilla(ultima.id, track) ? "" : "Esa canción no está en la cadena que suena: cambia a la suya para oírla");
+  }
 
   const q = normal(busqueda.trim());
   const lista = q ? tracks.filter((t) => normal(`${t.title} ${t.artist}`).includes(q)) : tracks;
@@ -45,6 +65,18 @@ export function Entradillas({ tracks, inicial }: { tracks: Tema[]; inicial?: str
                 <span className="block truncate font-display text-xl uppercase">{t.title}</span>
                 <span className="block truncate text-xs uppercase">{t.artist}</span>
               </p>
+              {hechas.some((e) => e.track === t.id) && (
+                <button
+                  onClick={() => oir(t.id)}
+                  aria-label={`Oír ${t.title} con su entradilla`}
+                  title="Oír cómo queda con su entradilla"
+                  className="grid size-10 place-items-center hover:bg-black hover:text-accent"
+                >
+                  <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" className="size-4">
+                    <path d="M4 2.5v11l9-5.5z" />
+                  </svg>
+                </button>
+              )}
               {elegido !== t.id && (
                 <button
                   onClick={() => {

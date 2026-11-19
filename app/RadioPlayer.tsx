@@ -8,7 +8,7 @@ import type { Energy } from "@/lib/franjas";
 import { PITIDO, tienes } from "@/lib/buzon-reglas";
 import { BUZON_INTRO, JINGLE_EVERY, JINGLES } from "@/lib/jingles";
 import { nowPlaying } from "@/lib/schedule";
-import { BUZON_NUEVO, cambiarBuzon, ESCUCHAR } from "./buzonEstado";
+import { BUZON_NUEVO, cambiarBuzon, ESCUCHAR, OIR_ENTRADILLA, type PideEntradilla } from "./buzonEstado";
 import { CambiaCadena } from "./CambiaCadena";
 import { Microfono } from "./Grabadora";
 import { useStored } from "./useStored";
@@ -217,7 +217,8 @@ export function RadioPlayer({ tracks, thanks, cadena, cadenas }: { tracks: Radio
 
     // Declarations, not consts, so they can schedule each other
     // encima: un mensaje del buzón va a sonar sobre esta canción, y no hay que cortarlo
-    function playAt(index: number, startAt: number, encima = false) {
+    // entradilla: la que debe sonar sobre su arranque, en vez de una al azar (para oír cómo queda)
+    function playAt(index: number, startAt: number, encima = false, entradilla?: string) {
       // Re-tuning after a blocked autoplay would otherwise leave two chains running
       clearTimeout(timer.current);
       if (!encima) {
@@ -236,7 +237,7 @@ export function RadioPlayer({ tracks, thanks, cadena, cadenas }: { tracks: Radio
       controller.current?.load(track, startAt);
       controller.current?.play();
       // Solo si la canción empieza desde el principio, y no encima de un mensaje del buzón
-      if (startAt === 0 && !encima) ponEntradilla(track.id);
+      if (startAt === 0 && !encima) ponEntradilla(track.id, entradilla);
 
       // Backup for when the player never reports an end, like a 30s preview that waits out
       // the full length. Every song starts a second or two after loading, so this timer
@@ -438,8 +439,8 @@ export function RadioPlayer({ tracks, thanks, cadena, cadenas }: { tracks: Radio
     window.addEventListener(BUZON_NUEVO, refreshAudios);
 
     /** Una entradilla de esa canción, si tiene, encima de su arranque y con la canción más baja */
-    function ponEntradilla(trackId: string) {
-      const de = entradillas.filter((e) => e.track === trackId);
+    function ponEntradilla(trackId: string, cual?: string) {
+      const de = cual ? [{ id: cual }] : entradillas.filter((e) => e.track === trackId);
       if (!de.length) return;
       const run = ++buzonRun;
       setBuzon("entradilla");
@@ -455,6 +456,23 @@ export function RadioPlayer({ tracks, thanks, cadena, cadenas }: { tracks: Radio
       jingle.play().catch(fin);
     }
 
+    // Oír una entradilla con su canción (oirEntradilla en buzonEstado.ts): la canción desde el
+    // principio y la entradilla encima; al acabar, la radio sigue con el reloj
+    let pendiente: { index: number; id: string } | null = null;
+    const pideEntradilla = (e: Event) => {
+      const pide = (e as CustomEvent<PideEntradilla>).detail;
+      const index = tracksRef.current.findIndex((t) => t.id === pide.track);
+      if (index < 0) return;
+      pide.ok = true;
+      // Sin reproductor aún, en cuanto esté listo
+      if (!controller.current) return void (pendiente = { index, id: pide.id });
+      tuned = true;
+      playAt(index, 0, false, pide.id);
+    };
+    window.addEventListener(OIR_ENTRADILLA, pideEntradilla);
+    // ?entradilla=<id> hace lo mismo al sintonizar, para probarla
+    let entradillaUrl = new URLSearchParams(location.search).get("entradilla");
+
     function playScheduled() {
       const np = nowPlaying(tracksRef.current, Date.now())!;
       playAt(np.index, Math.floor(np.offsetSec));
@@ -465,6 +483,21 @@ export function RadioPlayer({ tracks, thanks, cadena, cadenas }: { tracks: Radio
     // ?buzon pone al sintonizar el último mensaje del buzón, como en antena, para probarlo
     let forceBuzon = new URLSearchParams(location.search).has("buzon");
     function start() {
+      if (pendiente) {
+        const { index, id } = pendiente;
+        pendiente = null;
+        return playAt(index, 0, false, id);
+      }
+      if (entradillaUrl) {
+        const id = entradillaUrl;
+        entradillaUrl = null;
+        return void refreshEntradillas().then(() => {
+          const e = entradillas.find((x) => x.id === id);
+          const index = e ? tracksRef.current.findIndex((t) => t.id === e.track) : -1;
+          if (index >= 0) playAt(index, 0, false, e!.id);
+          else playScheduled();
+        });
+      }
       if (forceBuzon) {
         forceBuzon = false;
         return void refreshBuzon().then(() => {
@@ -558,6 +591,7 @@ export function RadioPlayer({ tracks, thanks, cadena, cadenas }: { tracks: Radio
       cancelled = true;
       buzonRun++;
       clearInterval(buzonPoll);
+      window.removeEventListener(OIR_ENTRADILLA, pideEntradilla);
       window.removeEventListener(ESCUCHAR, escucharBuzon);
       window.removeEventListener(BUZON_NUEVO, refreshAudios);
       cambiarBuzon({ escuchando: false });

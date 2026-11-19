@@ -3,6 +3,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import type { Audio } from "@/lib/buzon";
 import { REVISAR } from "@/lib/buzon-reglas";
+import { oirEntradilla } from "../buzonEstado";
 import { useStored } from "../useStored";
 
 // La clave se queda en este navegador, para no escribirla cada vez
@@ -56,6 +57,7 @@ function Fila({ audio, clave, onCambio }: { audio: Audio; clave: string; onCambi
 function Entradillas({ clave, temas }: { clave: string; temas: Record<string, string> }) {
   const [lista, setLista] = useState<{ id: string; at: string; track: string }[] | null>(null);
   const [ocupado, setOcupado] = useState<string | null>(null);
+  const [aviso, setAviso] = useState<{ id: string; texto: string } | null>(null);
 
   useEffect(() => {
     fetch("/api/entradillas")
@@ -80,9 +82,19 @@ function Entradillas({ clave, temas }: { clave: string; temas: Record<string, st
             {temas[e.track] ?? "Una canción que ya no está en la radio"} · {cuando(e.at)}
           </p>
           <audio controls preload="none" src={`/api/entradillas/${e.id}`} className="w-full" />
-          <button disabled={ocupado === e.id} onClick={() => borrar(e.id)} className="self-start border-2 border-black px-3 py-1 font-mono text-xs uppercase hover:bg-black hover:text-accent disabled:opacity-50">
-            Borrar
-          </button>
+          <div className="flex flex-wrap items-center gap-2 font-mono text-xs uppercase">
+            {/* Como en antena: la canción desde el principio, más baja, con la entradilla encima */}
+            <button
+              onClick={() => setAviso(oirEntradilla(e.id, e.track) ? null : { id: e.id, texto: "Esa canción no está en la cadena que suena: cambia a la suya para oírla" })}
+              className="bg-black px-3 py-1.5 font-bold text-accent hover:opacity-80"
+            >
+              Oír con su canción
+            </button>
+            <button disabled={ocupado === e.id} onClick={() => borrar(e.id)} className="border-2 border-black px-3 py-1 hover:bg-black hover:text-accent disabled:opacity-50">
+              Borrar
+            </button>
+            {aviso?.id === e.id && <span className="normal-case">{aviso.texto}</span>}
+          </div>
         </li>
       ))}
     </ul>

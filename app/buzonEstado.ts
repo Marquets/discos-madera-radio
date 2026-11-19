@@ -35,3 +35,15 @@ export const ESCUCHAR = "radio:buzon";
 export const BUZON_NUEVO = "radio:buzon-nuevo";
 /** Pone los mensajes del buzón, o los para si ya están sonando */
 export const escucharBuzon = () => window.dispatchEvent(new Event(ESCUCHAR));
+
+export const OIR_ENTRADILLA = "radio:entradilla";
+export type PideEntradilla = { id: string; track: string; ok: boolean };
+/**
+ * Pone ya la canción desde el principio con esa entradilla encima, como sonaría en antena.
+ * El reproductor contesta en el acto: false si esa canción no está en la cadena que suena.
+ */
+export function oirEntradilla(id: string, track: string) {
+  const detail: PideEntradilla = { id, track, ok: false };
+  window.dispatchEvent(new CustomEvent(OIR_ENTRADILLA, { detail }));
+  return detail.ok;
+}

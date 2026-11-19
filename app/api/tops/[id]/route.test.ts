@@ -12,13 +12,20 @@ describe("PUT /api/tops/[id]", () => {
   it("cambia el nombre y los comentarios, y quita los que se dejan vacíos", async () => {
     await nuevoEnvio({ name: "Ana", discos: Array.from({ length: 10 }, (_, i) => disco(i)) });
     const { id } = (await leerEnvios()).at(-1)!;
-    const res = await put(id, { name: "  Ana  María ", comments: ["", " Qué disco "] });
+    const res = await put(id, { name: "  Ana  María ", comments: ["", " Qué disco "], aprobado: false });
     expect(res.status).toBe(200);
     const envio = (await res.json()).envios.find((e: { id: string }) => e.id === id);
     expect(envio.name).toBe("Ana María");
     expect(envio.discos[0]).not.toHaveProperty("comment");
     expect(envio.discos[1].comment).toBe("Qué disco");
     expect(envio.discos[1].title).toBe("Disco 1");
+  });
+
+  it("aprueba con lo que manda /revisar, sin perder los comentarios", async () => {
+    await nuevoEnvio({ name: "Ana", discos: Array.from({ length: 10 }, (_, i) => disco(i)) });
+    const { id } = (await leerEnvios()).at(-1)!;
+    const envio = (await (await put(id, { name: "Ana", comments: ["Nuevo"], aprobado: true })).json()).envios.find((e: { id: string }) => e.id === id);
+    expect(envio).toMatchObject({ aprobado: true, discos: expect.arrayContaining([expect.objectContaining({ comment: "Nuevo" })]) });
   });
 
   it("pide la clave y un nombre", async () => {

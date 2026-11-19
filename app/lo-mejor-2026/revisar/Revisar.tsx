@@ -20,7 +20,7 @@ function Editar({ envio, clave, onCambio, onCerrar }: { envio: Envio; clave: str
   async function guardar(e: FormEvent) {
     e.preventDefault();
     setGuardando(true);
-    const res = await fetch(`/api/tops/${envio.id}`, { method: "PUT", headers: { "x-clave": clave, "Content-Type": "application/json" }, body: JSON.stringify({ name, comments }) }).catch(() => null);
+    const res = await fetch(`/api/tops/${envio.id}`, { method: "PUT", headers: { "x-clave": clave, "Content-Type": "application/json" }, body: JSON.stringify({ name, comments, aprobado: envio.aprobado }) }).catch(() => null);
     setGuardando(false);
     if (!res?.ok) return setError((await res?.json().catch(() => null))?.error ?? "No se ha podido guardar");
     onCambio((await res.json()).envios);
@@ -62,9 +62,11 @@ function Fila({ envio, clave, onCambio }: { envio: Envio; clave: string; onCambi
   const [ocupado, setOcupado] = useState(false);
   const [editando, setEditando] = useState(false);
 
-  async function hacer(method: "PATCH" | "DELETE") {
+  async function hacer(method: "PUT" | "DELETE") {
     setOcupado(true);
-    const res = await fetch(`/api/tops/${envio.id}`, { method, headers: { "x-clave": clave } }).catch(() => null);
+    // Aprobar manda el top tal como se ve aquí, comentarios incluidos (editar en lib/tops.ts)
+    const body = method === "PUT" ? JSON.stringify({ name: envio.name, comments: envio.discos.map((d) => d.comment ?? ""), aprobado: true }) : undefined;
+    const res = await fetch(`/api/tops/${envio.id}`, { method, headers: { "x-clave": clave, "Content-Type": "application/json" }, body }).catch(() => null);
     setOcupado(false);
     if (res?.ok) onCambio((await res.json()).envios);
   }
@@ -74,7 +76,7 @@ function Fila({ envio, clave, onCambio }: { envio: Envio; clave: string; onCambi
       {editando ? <Editar envio={envio} clave={clave} onCambio={onCambio} onCerrar={() => setEditando(false)} /> : <TopLista top={envio} />}
       <div className={`flex gap-2 font-mono text-xs uppercase ${editando ? "hidden" : ""}`}>
         {!envio.aprobado && (
-          <button disabled={ocupado} onClick={() => hacer("PATCH")} className="bg-black px-3 py-1.5 font-bold text-accent hover:opacity-80 disabled:opacity-50">
+          <button disabled={ocupado} onClick={() => hacer("PUT")} className="bg-black px-3 py-1.5 font-bold text-accent hover:opacity-80 disabled:opacity-50">
             Aprobar
           </button>
         )}

@@ -42,20 +42,17 @@ export async function nuevoEnvio(top: Top) {
   await guardar({ ...top, id: randomUUID(), at: new Date().toISOString(), aprobado: false });
 }
 
-// Lo que devuelven ya lleva el cambio: con la lectura eventual del store, volver a listar justo después puede no verlo
-export async function aprobar(id: string) {
-  const envios = await leerEnvios();
-  const envio = envios.find((e) => e.id === id);
-  if (envio) await guardar({ ...envio, aprobado: true });
-  return envios.map((e) => (e.id === id ? { ...e, aprobado: true } : e));
-}
-
-/** Cambia el nombre y los comentarios; los discos no, que salen de Spotify */
-export async function editar(id: string, name: string, comments: string[]) {
+/**
+ * Guarda el nombre, los comentarios y si está aprobado tal como los tiene /revisar. Del store solo
+ * salen los discos, que no cambian: su lectura es eventual y justo después de editar puede dar la
+ * versión de antes, y aprobar con esa copia borraba los comentarios recién escritos. Lo que
+ * devuelve ya lleva el cambio, por lo mismo.
+ */
+export async function editar(id: string, name: string, comments: string[], aprobado: boolean) {
   const envios = await leerEnvios();
   const envio = envios.find((e) => e.id === id);
   if (!envio) return envios;
-  const nuevo: Envio = { ...envio, name, discos: envio.discos.map((d, i) => ({ ...d, comment: comments[i] || undefined })) };
+  const nuevo: Envio = { ...envio, name, aprobado, discos: envio.discos.map((d, i) => ({ ...d, comment: comments[i] || undefined })) };
   await guardar(nuevo);
   return envios.map((e) => (e.id === id ? nuevo : e));
 }

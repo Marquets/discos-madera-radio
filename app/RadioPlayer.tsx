@@ -82,6 +82,8 @@ const OIDOS_KEY = "radio-buzon-oidos";
 const LOGO_ANIMS = ["baile", "ondas", "cinta", "neon", "glitch", "dibujo", "dibus"];
 // La canción baja a esto mientras un mensaje del buzón suena por encima (solo YouTube tiene volumen)
 const BAJO_MENSAJE = 0.3;
+// Y a esto bajo una entradilla, que habla justo encima del arranque de la canción
+const BAJO_ENTRADILLA = 0.15;
 
 let spotifyApi: Promise<IFrameAPI> | undefined;
 
@@ -444,7 +446,7 @@ export function RadioPlayer({ tracks, thanks, cadena, cadenas }: { tracks: Radio
       if (!de.length) return;
       const run = ++buzonRun;
       setBuzon("entradilla");
-      controller.current?.setVolume?.(volumeRef.current * BAJO_MENSAJE);
+      controller.current?.setVolume?.(volumeRef.current * BAJO_ENTRADILLA);
       const fin = () => {
         if (run !== buzonRun) return;
         jingle.onended = jingle.onerror = null;

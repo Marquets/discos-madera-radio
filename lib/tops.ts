@@ -11,6 +11,10 @@ export type Envio = Top & { id: string; at: string; aprobado: boolean };
 
 export const MAX_PENDIENTES = 40;
 
+// Lo mismo al mandar un top que al editarlo en /revisar
+export const limpiarNombre = (name: unknown) => (typeof name === "string" ? name.replace(/\s+/g, " ").trim().slice(0, 30) : "");
+export const limpiarComentario = (comment: unknown) => (typeof comment === "string" ? comment.trim().slice(0, 280) : "");
+
 const PREFIX = "tops2026/";
 
 // En local no hay blob store, así que basta la memoria (se pierde al reiniciar)
@@ -44,6 +48,16 @@ export async function aprobar(id: string) {
   const envio = envios.find((e) => e.id === id);
   if (envio) await guardar({ ...envio, aprobado: true });
   return envios.map((e) => (e.id === id ? { ...e, aprobado: true } : e));
+}
+
+/** Cambia el nombre y los comentarios; los discos no, que salen de Spotify */
+export async function editar(id: string, name: string, comments: string[]) {
+  const envios = await leerEnvios();
+  const envio = envios.find((e) => e.id === id);
+  if (!envio) return envios;
+  const nuevo: Envio = { ...envio, name, discos: envio.discos.map((d, i) => ({ ...d, comment: comments[i] || undefined })) };
+  await guardar(nuevo);
+  return envios.map((e) => (e.id === id ? nuevo : e));
 }
 
 export async function borrar(id: string) {

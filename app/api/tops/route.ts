@@ -1,6 +1,6 @@
 import { esAdmin } from "@/lib/buzon-clave";
 import { albumIdFrom, getAlbum } from "@/lib/spotify";
-import { leerEnvios, MAX_PENDIENTES, nuevoEnvio } from "@/lib/tops";
+import { leerEnvios, limpiarComentario, limpiarNombre, MAX_PENDIENTES, nuevoEnvio } from "@/lib/tops";
 
 const COOLDOWN_MS = 60_000;
 // shortcut: per function instance and keyed by IP, as for the messages; enough to stop a double send
@@ -15,13 +15,13 @@ export async function GET(request: Request) {
 /** Un top 10 nuevo: entra sin aprobar */
 export async function POST(request: Request) {
   const body = await request.json().catch(() => ({}));
-  const name = typeof body.name === "string" ? body.name.replace(/\s+/g, " ").trim().slice(0, 30) : "";
+  const name = limpiarNombre(body.name);
   const entradas: { url?: unknown; comment?: unknown }[] = Array.isArray(body.discos) ? body.discos.map((d: unknown) => (d && typeof d === "object" ? d : {})) : [];
   if (!name) return Response.json({ error: "Falta tu nombre" }, { status: 400 });
   if (entradas.length !== 10) return Response.json({ error: "Tienen que ser 10 discos" }, { status: 400 });
 
   const ids = entradas.map(({ url }) => (typeof url === "string" ? albumIdFrom(url) : undefined));
-  const comments = entradas.map(({ comment }) => (typeof comment === "string" ? comment.trim().slice(0, 280) : ""));
+  const comments = entradas.map(({ comment }) => limpiarComentario(comment));
   const mal = ids.findIndex((id) => !id);
   if (mal >= 0) return Response.json({ error: `El ${mal + 1} no es un enlace de un álbum de Spotify` }, { status: 400 });
   const repe = ids.findIndex((id, i) => ids.indexOf(id) !== i);

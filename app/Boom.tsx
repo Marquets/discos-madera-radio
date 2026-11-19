@@ -14,11 +14,10 @@ function burst(rx: number, ry: number, inner: number) {
 const OUTER = burst(98, 68, 0.66);
 const INNER = burst(84, 56, 0.78);
 
-/** The burst behind "The very best of 2026": an accent blast round a white one, black outline; `shadow` adds a hard offset copy behind, pop-art style */
-export function Boom({ className, shadow }: { className?: string; shadow?: boolean }) {
+/** The burst behind "The very best of 2026": an accent blast round a white one, black outline */
+export function Boom({ className }: { className?: string }) {
   return (
     <svg viewBox="-4 -4 216 156" className={`overflow-visible ${className ?? ""}`} aria-hidden>
-      {shadow && <path d={OUTER} transform="translate(7 7)" className="fill-white" />}
       <path d={OUTER} className="fill-accent stroke-black" strokeWidth="3" strokeLinejoin="round" />
       <path d={INNER} className="fill-white stroke-black" strokeWidth="3" strokeLinejoin="round" />
     </svg>

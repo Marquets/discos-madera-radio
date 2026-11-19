@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import type { CadenaPublica } from "@/lib/cadenas";
@@ -9,6 +10,7 @@ import { BUZON_INTRO, JINGLE_EVERY, JINGLES } from "@/lib/jingles";
 import { nowPlaying } from "@/lib/schedule";
 import { BUZON_NUEVO, cambiarBuzon, ESCUCHAR } from "./buzonEstado";
 import { CambiaCadena } from "./CambiaCadena";
+import { Microfono } from "./Grabadora";
 import { useStored } from "./useStored";
 import { createYoutubePlayer } from "./youtubePlayer";
 
@@ -99,7 +101,7 @@ export function RadioPlayer({ tracks, thanks, cadena, cadenas }: { tracks: Radio
   const controller = useRef<Player>(null);
   const [source, setSource] = useState<"spotify" | "youtube">("spotify");
   // Mientras suena un mensaje del buzón, que el ticker lo diga
-  const [buzon, setBuzon] = useState(false);
+  const [buzon, setBuzon] = useState<boolean | "entradilla">(false);
   // Bumped by the Spotify/YouTube switch, so the player is rebuilt with the new choice
   const [choice, setChoice] = useState(0);
   // On a phone the player docks at the bottom of every page but the front one, and folds away
@@ -233,6 +235,8 @@ export function RadioPlayer({ tracks, thanks, cadena, cadenas }: { tracks: Radio
       setCurrent(track.id);
       controller.current?.load(track, startAt);
       controller.current?.play();
+      // Solo si la canción empieza desde el principio, y no encima de un mensaje del buzón
+      if (startAt === 0 && !encima) ponEntradilla(track.id);
 
       // Backup for when the player never reports an end, like a 30s preview that waits out
       // the full length. Every song starts a second or two after loading, so this timer
@@ -336,8 +340,18 @@ export function RadioPlayer({ tracks, thanks, cadena, cadenas }: { tracks: Radio
           cambiarBuzon({ mensajes: buzonList.length });
         })
         .catch(() => {});
-    refreshBuzon();
-    const buzonPoll = setInterval(refreshBuzon, BUZON_POLL_MS);
+    // Las entradillas (lib/entradillas.ts): la voz de alguien presentando la canción que empieza
+    let entradillas: { id: string; track: string }[] = [];
+    const refreshEntradillas = () =>
+      fetch("/api/entradillas")
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d: { entradillas: typeof entradillas } | null) => {
+          if (d && !cancelled) entradillas = d.entradillas;
+        })
+        .catch(() => {});
+    const refreshAudios = () => (refreshBuzon(), refreshEntradillas());
+    refreshAudios();
+    const buzonPoll = setInterval(refreshAudios, BUZON_POLL_MS);
     let buzonRun = 0;
     let escuchando = false;
 
@@ -421,7 +435,25 @@ export function RadioPlayer({ tracks, thanks, cadena, cadenas }: { tracks: Radio
       ponMensajes(buzonList.toReversed(), () => (sonaba ? volver() : setPlaying(false)), sonaba);
     };
     window.addEventListener(ESCUCHAR, escucharBuzon);
-    window.addEventListener(BUZON_NUEVO, refreshBuzon);
+    window.addEventListener(BUZON_NUEVO, refreshAudios);
+
+    /** Una entradilla de esa canción, si tiene, encima de su arranque y con la canción más baja */
+    function ponEntradilla(trackId: string) {
+      const de = entradillas.filter((e) => e.track === trackId);
+      if (!de.length) return;
+      const run = ++buzonRun;
+      setBuzon("entradilla");
+      controller.current?.setVolume?.(volumeRef.current * BAJO_MENSAJE);
+      const fin = () => {
+        if (run !== buzonRun) return;
+        jingle.onended = jingle.onerror = null;
+        setBuzon(false);
+        controller.current?.setVolume?.(volumeRef.current);
+      };
+      jingle.src = `/api/entradillas/${de[Math.floor(Math.random() * de.length)].id}`;
+      jingle.onended = jingle.onerror = fin;
+      jingle.play().catch(fin);
+    }
 
     function playScheduled() {
       const np = nowPlaying(tracksRef.current, Date.now())!;
@@ -527,7 +559,7 @@ export function RadioPlayer({ tracks, thanks, cadena, cadenas }: { tracks: Radio
       buzonRun++;
       clearInterval(buzonPoll);
       window.removeEventListener(ESCUCHAR, escucharBuzon);
-      window.removeEventListener(BUZON_NUEVO, refreshBuzon);
+      window.removeEventListener(BUZON_NUEVO, refreshAudios);
       cambiarBuzon({ escuchando: false });
       clearTimeout(timer.current);
       jingle.pause();
@@ -544,6 +576,8 @@ export function RadioPlayer({ tracks, thanks, cadena, cadenas }: { tracks: Radio
   const gracias = thanks.length ? ` · Gracias a ${thanks.join(", ")}` : "";
   const ticker = live
     ? "Live · Directos del colectivo Discos Madera"
+    : buzon === "entradilla" && track
+      ? `Entradilla · Ahora suena: ${track.title} — ${track.artist} · Graba la tuya en /entradillas`
     : buzon
       ? "El buzón de Discos Madera · Mensajes de voz de los oyentes · Deja el tuyo con el micro de la portada"
     : !tracks.length
@@ -624,6 +658,11 @@ export function RadioPlayer({ tracks, thanks, cadena, cadenas }: { tracks: Radio
           <button onClick={() => tuneIn.current()} aria-label="Sintonizar la radio" className="py-2 pl-4 pr-6 text-lg leading-none hover:text-white">
             ▶
           </button>
+        )}
+        {playing && track && (
+          <Link href={`/entradillas?tema=${track.id}`} aria-label={`Grabar una entradilla para ${track.title}`} title="Graba una entradilla para esta canción" className="py-2 pl-4 hover:text-white">
+            <Microfono className="size-4" />
+          </Link>
         )}
         {playing && (
           <span className="flex items-center gap-2 pl-4 pr-6 text-xs font-bold">

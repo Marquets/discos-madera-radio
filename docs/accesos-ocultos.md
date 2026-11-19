@@ -5,7 +5,7 @@ Todo cuelga del dominio de la radio (en local, `http://127.0.0.1:3000`). Aquí n
 ## Páginas con clave
 | Dirección | Qué es | Cómo se entra |
 |---|---|---|
-| `/buzon` | Cola del buzón de voz: escuchar, aprobar y borrar audios | Clave `BUZON_CLAVE` |
+| `/buzon` | Cola del buzón de voz: escuchar, aprobar y borrar audios, y borrar entradillas | Clave `BUZON_CLAVE` |
 | `/lo-mejor-2026/revisar` | Aprobar o borrar los top 10 que manda la gente | La misma `BUZON_CLAVE`; si ya entraste al buzón en ese navegador, ya estás dentro |
 
 - La clave se queda guardada en el navegador. Para quitarla, pulsa "Salir" al final de cualquiera de las dos páginas.
@@ -18,6 +18,7 @@ Todo cuelga del dominio de la radio (en local, `http://127.0.0.1:3000`). Aquí n
 | `/archivo` (y `/archivo?vista=mes` para la vista mensual) | "Ver el archivo →" en la portada |
 | `/lo-mejor-2026` | La pegatina "Best of 2026!!" junto al logo |
 | `/privacidad` | Enlace del pie |
+| `/entradillas` (y `/entradillas?tema=<id>` con la canción elegida) | El micro del reproductor mientras suena una canción; el panel de la "i" |
 
 ## Trucos en la dirección (para probar)
 Se añaden a cualquier página, por ejemplo `/?cortinilla`.

@@ -31,9 +31,10 @@ const reloj = (s: number) => `0:${String(Math.max(0, Math.ceil(s))).padStart(2, 
 
 /**
  * Graba un mensaje de hasta MAX_SEC segundos para el buzón, o sube uno ya grabado de hasta
- * MAX_SUBIDA, deja oírlo y lo manda.
+ * MAX_SUBIDA, deja oírlo y lo manda. Con `tema`, lo que se graba es la entradilla de esa canción
+ * (lib/entradillas.ts) en vez de un mensaje.
  */
-export function Grabadora({ onClose, onStatus }: { onClose: () => void; onStatus: (s: string) => void }) {
+export function Grabadora({ onClose, onStatus, tema }: { onClose: () => void; onStatus: (s: string) => void; tema?: string }) {
   const [estado, setEstado] = useState<Estado>({ fase: "elegir" });
   const [ahora, setAhora] = useState(0);
   const recorder = useRef<MediaRecorder>(null);
@@ -131,9 +132,12 @@ export function Grabadora({ onClose, onStatus }: { onClose: () => void; onStatus
   async function enviar() {
     if (estado.fase !== "lista") return;
     setEstado({ ...estado, fase: "enviando" });
-    const res = await fetch("/api/buzon", { method: "POST", headers: { "Content-Type": estado.audio.type }, body: estado.audio }).catch(() => null);
+    const res = await fetch(tema ? `/api/entradillas?track=${tema}` : "/api/buzon", { method: "POST", headers: { "Content-Type": estado.audio.type }, body: estado.audio }).catch(() => null);
     if (res?.ok) {
-      if (REVISAR) onStatus("Recibido. Si pasa la revisión, estará en el buzón y sonará en la radio");
+      if (tema) {
+        onStatus("¡Entradilla guardada! Sonará cada vez que salga la canción");
+        window.dispatchEvent(new Event(BUZON_NUEVO));
+      } else if (REVISAR) onStatus("Recibido. Si pasa la revisión, estará en el buzón y sonará en la radio");
       else {
         onStatus("¡Ya está en el buzón! Dale a los cascos para oírlo");
         // Que los cascos lo cuenten ya, sin esperar a la próxima vuelta del reproductor
@@ -143,7 +147,7 @@ export function Grabadora({ onClose, onStatus }: { onClose: () => void; onStatus
     }
     setEstado({ ...estado, fase: "lista" });
     if (res?.status === 429) onStatus(`Puedes dejar otro en ${Math.ceil((await res.json()).wait / 60_000)} min`);
-    else if (res?.status === 503) onStatus("El buzón está lleno, prueba mañana");
+    else if (res?.status === 503) onStatus(tema ? "No caben más entradillas" : "El buzón está lleno, prueba mañana");
     else if (res?.status === 413) onStatus("Es demasiado largo");
     else onStatus("No se ha podido enviar");
   }
@@ -159,7 +163,7 @@ export function Grabadora({ onClose, onStatus }: { onClose: () => void; onStatus
 
   const boton = "px-3 py-1.5 hover:text-white";
   return (
-    <div role="group" aria-label="Buzón de voz" onKeyDown={(e) => e.key === "Escape" && onClose()} className="flex flex-wrap items-center gap-2">
+    <div role="group" aria-label={tema ? "Grabar la entradilla" : "Buzón de voz"} onKeyDown={(e) => e.key === "Escape" && onClose()} className="flex flex-wrap items-center gap-2">
       {estado.fase === "pidiendo" && <span className="py-1.5">Abriendo el micrófono…</span>}
       {estado.fase === "elegir" && (
         <>

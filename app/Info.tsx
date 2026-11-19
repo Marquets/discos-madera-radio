@@ -2,12 +2,10 @@ import { MAX_SEC, MAX_SUBIDA, REVISAR } from "@/lib/buzon-reglas";
 
 // Solo lo nuevo de estas semanas; lo de siempre (los mensajes escritos, las cortinillas) no
 const QUE = [
+  { titulo: "Entradillas", texto: "Presenta una canción como un locutor: elígela en /entradillas, o dale al micro del reproductor mientras suena, y graba cómo la presentarías. Sonará encima de su principio cada vez que salga." },
+  { titulo: "The very best of 2026", texto: "La pegatina junto al logo lleva a los diez discos del año de cada uno de nosotros, y puedes mandar el tuyo." },
   { titulo: "Buzón de voz", texto: `Con el micro de abajo a la derecha grabas un mensaje de hasta ${MAX_SEC} segundos para la radio, o subes uno ya grabado de hasta ${MAX_SUBIDA}.${REVISAR ? " Lo escuchamos antes de publicarlo." : ""} Se borra a la semana.` },
   { titulo: "Escucha el buzón", texto: "Los cascos ponen los mensajes de la semana. Si la radio sonaba, se pausa y vuelve al terminar. Además, después de cada cortinilla suena uno en antena." },
-  { titulo: "Pon un tema", texto: "Busca una canción y añádela a la playlist desde la web, con tu nombre si quieres. Entra en la radio enseguida." },
-  { titulo: "¿Quién la trajo?", texto: "De vez en cuando se abre un ojo en el cabezal del magnetófono: pasa el ratón o tócalo y te dice quién subió la canción." },
-  { titulo: "Suena según la hora", texto: "Cada franja del día pone las canciones que le van, y de noche entran las más tranquilas y de piano." },
-  { titulo: "Salvapantallas", texto: "Si dejas la radio puesta sin tocar nada, a los 30 segundos la portada se queda en el logo, el magnetófono y el reproductor." },
 ];
 
 /**

@@ -52,7 +52,44 @@ function Fila({ audio, clave, onCambio }: { audio: Audio; clave: string; onCambi
   );
 }
 
-export function Cola() {
+/** Las entradillas de cada canción (lib/entradillas.ts): no caducan, así que aquí se borran */
+function Entradillas({ clave, temas }: { clave: string; temas: Record<string, string> }) {
+  const [lista, setLista] = useState<{ id: string; at: string; track: string }[] | null>(null);
+  const [ocupado, setOcupado] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/entradillas")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => d && setLista(d.entradillas));
+  }, []);
+
+  async function borrar(id: string) {
+    setOcupado(id);
+    const res = await fetch(`/api/entradillas/${id}`, { method: "DELETE", headers: { "x-clave": clave } }).catch(() => null);
+    setOcupado(null);
+    if (res?.ok) setLista((await res.json()).entradillas);
+  }
+
+  if (!lista) return <p>Cargando…</p>;
+  if (!lista.length) return <p>Ninguna todavía.</p>;
+  return (
+    <ul className="flex flex-col gap-3">
+      {lista.toReversed().map((e) => (
+        <li key={e.id} className="flex flex-col gap-2 border-2 border-black p-3">
+          <p className="font-mono text-xs uppercase">
+            {temas[e.track] ?? "Una canción que ya no está en la radio"} · {cuando(e.at)}
+          </p>
+          <audio controls preload="none" src={`/api/entradillas/${e.id}`} className="w-full" />
+          <button disabled={ocupado === e.id} onClick={() => borrar(e.id)} className="self-start border-2 border-black px-3 py-1 font-mono text-xs uppercase hover:bg-black hover:text-accent disabled:opacity-50">
+            Borrar
+          </button>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+export function Cola({ temas }: { temas: Record<string, string> }) {
   const [clave, setClave] = useStored(CLAVE_KEY);
   const [escrita, setEscrita] = useState("");
   const [audios, setAudios] = useState<Audio[] | null>(null);
@@ -136,6 +173,9 @@ export function Cola() {
       ) : (
         <p>Ninguno aprobado.</p>
       )}
+      <h2 className="font-display text-3xl uppercase">Entradillas</h2>
+      <p>Suenan encima del principio de su canción cada vez que sale. No caducan.</p>
+      <Entradillas clave={clave} temas={temas} />
       <button onClick={() => setClave("")} className="self-center font-mono text-xs uppercase underline">
         Salir
       </button>
